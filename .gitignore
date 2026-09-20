@@ -1,0 +1,5 @@
+# Nothing in a plugin checkout is generated, so this list stays short.
+*.qmlc
+*.jsc
+.qmlls.ini
+.DS_Store

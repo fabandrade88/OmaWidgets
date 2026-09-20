@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+#
+# GPU discovery for omawidgets-probe. Sourced by it, not run on its own, so it
+# adds a file rather than a process.
+#
+# The three driver families keep different things in different places, and two of
+# them keep some of it nowhere at all. This decides which card to watch and where
+# each of its readings lives; interpreting the numbers is model/Gpu.js's job.
+#
+# Requires from the caller: emit, emit_path, first_readable, thermal_zone_typed
+# and cpu_temp_path.
+
+# On a hybrid laptop the discrete card is the one worth watching, so amdgpu and
+# nvidia win over an integrated Intel part when both are bound.
+omawidgets_gpu_device_dir() {
+  local card dir driver fallback=""
+  for card in /sys/class/drm/card[0-9]*; do
+    dir="$card/device"
+    [[ -d $dir && -L $dir/driver ]] || continue
+    driver=$(basename -- "$(readlink -f -- "$dir/driver")")
+    case $driver in
+      amdgpu | radeon | nvidia | nouveau) printf '%s\n' "$dir" && return 0 ;;
+      i915 | xe) [[ -z $fallback ]] && fallback="$dir" ;;
+    esac
+  done
+  [[ -n $fallback ]] && printf '%s\n' "$fallback"
+  return 0
+}
+
+omawidgets_gpu_vendor_name() {
+  case "${1:-}" in
+    0x8086) printf 'Intel Graphics\n' ;;
+    0x1002) printf 'AMD Radeon\n' ;;
+    0x10de) printf 'NVIDIA\n' ;;
+    *) printf 'GPU\n' ;;
+  esac
+}
+
+omawidgets_probe_gpu() {
+  local dir driver vendor hwmon shared
+  dir=$(omawidgets_gpu_device_dir)
+  [[ -n $dir ]] || return 0
+
+  driver=$(basename -- "$(readlink -f -- "$dir/driver")")
+  emit gpu.driver "$driver"
+  vendor=""
+  [[ -r $dir/vendor ]] && vendor=$(<"$dir/vendor")
+  emit gpu.name "$(omawidgets_gpu_vendor_name "${vendor//[$'\t\n\r ']/}")"
+
+  # amdgpu is the only family with a busy counter in sysfs.
+  emit_path gpu.busy "$dir/gpu_busy_percent"
+  emit_path gpu.mem.used "$dir/mem_info_vram_used"
+  emit_path gpu.mem.total "$dir/mem_info_vram_total"
+  emit_path gpu.power "$(first_readable "$dir"/hwmon/hwmon*/power1_average)"
+
+  hwmon=$(first_readable "$dir"/hwmon/hwmon*/temp1_input)
+  if [[ -n $hwmon ]]; then
+    emit_path gpu.temp "$hwmon"
+  else
+    shared=$(first_readable "$(thermal_zone_typed gpu)")
+    if [[ -n $shared ]]; then
+      emit_path gpu.temp "$shared"
+    else
+      # No sensor of its own. An integrated part shares the CPU package sensor,
+      # which is a real reading but not the GPU's — so it is labelled as shared
+      # rather than presented as a GPU temperature.
+      emit_path gpu.temp "$(cpu_temp_path)"
+      emit gpu.temp.shared 1
+    fi
+  fi
+
+  # amdgpu's hwmon reports hertz where i915 and xe report megahertz. The unit is
+  # recorded rather than converted here, so the scaling lives in one place.
+  case $driver in
+    xe)
+      emit_path gpu.freq "$dir/tile0/gt0/freq0/act_freq"
+      emit_path gpu.freq.max "$dir/tile0/gt0/freq0/rp0_freq"
+      emit gpu.freq.unit mhz
+      ;;
+    i915)
+      emit_path gpu.freq "$dir/gt_act_freq_mhz"
+      emit_path gpu.freq.max "$dir/gt_RP0_freq_mhz"
+      emit gpu.freq.unit mhz
+      ;;
+    amdgpu | radeon)
+      emit_path gpu.freq "$(first_readable "$dir"/hwmon/hwmon*/freq1_input)"
+      emit gpu.freq.unit hz
+      ;;
+  esac
+
+  # nvidia exposes nothing useful in sysfs, so its card is the one case that
+  # needs a helper binary. No nvidia-smi simply means no utilisation row.
+  [[ -x /usr/bin/nvidia-smi ]] && emit gpu.nvidiaSmi /usr/bin/nvidia-smi
+  return 0
+}

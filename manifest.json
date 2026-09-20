@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.fabandrade88.omawidgets",
+  "name": "OmaWidgets",
+  "version": "1.0.0",
+  "author": "Fabricio Oliveira de Andrade",
+  "license": "MIT",
+  "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, AirPods battery and listening mode, battery status, and a one-click power profile switch. Themed entirely from the active Omarchy theme.",
+  "kinds": [
+    "service",
+    "bar-widget",
+    "overlay"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml",
+    "overlay": "Overlay.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaWidgets",
+    "description": "macOS-style desktop cards for performance, AirPods, battery and power profile.",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "desktop": true,
+      "position": "top-right",
+      "marginX": 28,
+      "marginY": 20,
+      "cardWidth": 268,
+      "spacing": 10,
+      "columns": 1,
+      "opacity": 0.92,
+      "compact": false,
+      "intervalMs": 2000,
+      "cards": ["system", "pods", "battery", "power"],
+      "monitor": "",
+      "hidePodsWhenAbsent": true,
+      "showCoreBars": true
+    },
+    "schema": [
+      {
+        "key": "desktop",
+        "type": "boolean",
+        "label": "Show the cards on the desktop",
+        "description": "Draws the cards above the wallpaper and below your windows.",
+        "defaultValue": true
+      },
+      {
+        "key": "position",
+        "type": "string",
+        "label": "Screen position",
+        "description": "top-left, top-center, top-right, middle-left, middle-right, bottom-left, bottom-center or bottom-right.",
+        "defaultValue": "top-right"
+      },
+      {
+        "key": "cards",
+        "type": "string",
+        "label": "Cards to show, in order",
+        "description": "Any of system, pods, battery, power.",
+        "defaultValue": "system,pods,battery,power"
+      },
+      {
+        "key": "columns",
+        "type": "number",
+        "label": "Columns on the desktop",
+        "description": "1 to 4. The summoned overlay always spreads the cards across one row.",
+        "defaultValue": 1
+      },
+      {
+        "key": "cardWidth",
+        "type": "number",
+        "label": "Card width in pixels",
+        "defaultValue": 268
+      },
+      {
+        "key": "spacing",
+        "type": "number",
+        "label": "Gap between cards in pixels",
+        "defaultValue": 10
+      },
+      {
+        "key": "marginX",
+        "type": "number",
+        "label": "Horizontal screen margin in pixels",
+        "defaultValue": 28
+      },
+      {
+        "key": "marginY",
+        "type": "number",
+        "label": "Vertical screen margin in pixels",
+        "defaultValue": 20
+      },
+      {
+        "key": "opacity",
+        "type": "number",
+        "label": "Card background opacity",
+        "description": "0.2 to 1. The colour itself comes from the theme.",
+        "defaultValue": 0.92
+      },
+      {
+        "key": "compact",
+        "type": "boolean",
+        "label": "Compact cards",
+        "defaultValue": false
+      },
+      {
+        "key": "showCoreBars",
+        "type": "boolean",
+        "label": "Show a bar per CPU thread",
+        "defaultValue": true
+      },
+      {
+        "key": "intervalMs",
+        "type": "number",
+        "label": "Sampling interval in milliseconds",
+        "description": "500 to 60000. Sampling stops entirely while no card is on screen.",
+        "defaultValue": 2000
+      },
+      {
+        "key": "monitor",
+        "type": "string",
+        "label": "Limit the desktop cards to one monitor",
+        "description": "A connector name such as eDP-1. Leave empty for every monitor.",
+        "defaultValue": ""
+      },
+      {
+        "key": "hidePodsWhenAbsent",
+        "type": "boolean",
+        "label": "Hide the AirPods card when no device is reporting",
+        "defaultValue": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# Copies this checkout into ~/.config/omarchy/plugins/<id>/ and asks the running
+# shell to pick it up. For working on the plugin without publishing it.
+#
+# A copy, not a symlink: omarchy-plugin-validate refuses a symlink anywhere
+# inside a plugin folder, because a link could point installed plugin code at
+# arbitrary files on disk.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+ID=$(jq -r '.id' manifest.json)
+TARGET="$HOME/.config/omarchy/plugins/$ID"
+
+[[ -n $ID && $ID != null ]] || { echo "could not read .id from manifest.json" >&2; exit 1; }
+
+omarchy-plugin-validate . || exit 1
+
+mkdir -p "$TARGET"
+# --delete keeps the installed copy honest: a file removed here is removed there.
+# .git is excluded so the installed copy is plain files, not a checkout.
+rsync -a --delete --exclude '.git' --exclude 'docs' ./ "$TARGET/"
+echo "installed $ID -> $TARGET"
+
+if command -v omarchy-shell >/dev/null 2>&1; then
+  omarchy-shell shell rescanPlugins >/dev/null 2>&1 && echo "rescanned plugins"
+fi
+
+cat <<INFO
+
+Next:
+  omarchy plugin enable $ID --yes     # adds it to the bar and starts the service
+  omarchy-shell shell toggle $ID '{}' # summon the overlay
+  qs log -p "\${OMARCHY_PATH:-/usr/share/omarchy}/shell" --tail 40
+INFO

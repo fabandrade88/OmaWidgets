@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+#
+# One-shot hardware discovery for the OmaWidgets shell plugin.
+#
+# Prints "<key>\t<value>" lines describing WHERE to read each metric on this
+# machine. The plugin runs this once per shell session and then reads the
+# discovered paths directly with Quickshell's FileView, so the sampling loop
+# spawns no processes at all.
+#
+# Security posture, because this runs inside the long-lived shell process:
+#   * It takes no arguments and reads no environment beyond PATH and HOME.
+#     There is no input to inject through.
+#   * It only ever reads. No file is written, no service is contacted, nothing
+#     is escalated.
+#   * PATH is pinned, so a directory earlier on the user's PATH cannot
+#     substitute a different `basename` or `find`.
+#   * Every value it prints is a path it has already confirmed is a readable
+#     regular file, and tabs and newlines are stripped so one value can never
+#     forge a second key.
+set -euo pipefail
+export PATH=/usr/bin:/bin
+export LC_ALL=C
+IFS=$' \t\n'
+
+if (($# > 0)); then
+  echo "omawidgets-probe: takes no arguments" >&2
+  exit 2
+fi
+
+# Discovery is confined to these three trees. A path that does not start with
+# one of them is never printed, so a symlinked sysfs node cannot redirect the
+# plugin's reads at, say, a socket or a named pipe in $HOME.
+readonly ALLOWED_ROOTS=(/sys /proc)
+
+emit() {
+  local key="$1" value="${2-}"
+  # Strip anything that could break the one-key-per-line contract.
+  value="${value//$'\t'/ }"
+  value="${value//$'\n'/ }"
+  [[ -n $value ]] || return 0
+  printf '%s\t%s\n' "$key" "$value"
+}
+
+# A readable regular file inside an allowed root. Resolved first, so the check
+# applies to the real target rather than the link.
+emit_path() {
+  local key="$1" path="${2-}" resolved root ok=0
+  [[ -n $path ]] || return 0
+  resolved=$(readlink -f -- "$path" 2>/dev/null) || return 0
+  [[ -f $resolved && -r $resolved ]] || return 0
+  for root in "${ALLOWED_ROOTS[@]}"; do
+    [[ $resolved == "$root"/* ]] && ok=1 && break
+  done
+  ((ok)) || return 0
+  emit "$key" "$resolved"
+}
+
+first_readable() {
+  local candidate
+  for candidate in "$@"; do
+    [[ -f $candidate && -r $candidate ]] && printf '%s\n' "$candidate" && return 0
+  done
+  return 0
+}
+
+# ------------------------------------------------------------------------- cpu
+
+hwmon_named() {
+  local wanted="$1" dir name
+  for dir in /sys/class/hwmon/hwmon*; do
+    [[ -r $dir/name ]] || continue
+    name=$(<"$dir/name")
+    [[ $name == "$wanted" ]] && printf '%s\n' "$dir" && return 0
+  done
+  return 0
+}
+
+thermal_zone_typed() {
+  local pattern="$1" zone type
+  for zone in /sys/class/thermal/thermal_zone*; do
+    [[ -r $zone/type ]] || continue
+    type=$(<"$zone/type")
+    [[ ${type,,} == *"${pattern,,}"* ]] && printf '%s\n' "$zone/temp" && return 0
+  done
+  return 0
+}
+
+# Package temperature, in the order of how much it actually means: the CPU's own
+# die sensor first, then the ACPI thermal zone, then anything at all.
+cpu_temp_path() {
+  local dir
+  for dir in coretemp k10temp zenpower_temp; do
+    dir=$(hwmon_named "$dir")
+    [[ -n $dir && -r $dir/temp1_input ]] && printf '%s\n' "$dir/temp1_input" && return 0
+  done
+  first_readable "$(thermal_zone_typed x86_pkg_temp)" "$(thermal_zone_typed acpitz)" \
+    /sys/class/thermal/thermal_zone0/temp
+}
+
+emit cpu.model "$(awk -F': ' '/^model name/ { print $2; exit }' /proc/cpuinfo 2>/dev/null || true)"
+emit cpu.cores "$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || true)"
+emit_path cpu.temp "$(cpu_temp_path)"
+emit_path cpu.freq /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+emit_path cpu.freq.max /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq
+
+# ------------------------------------------------------------------------- gpu
+
+# Sourced, not run: the GPU rules are long enough to deserve their own file, and
+# sourcing keeps this a single process. The path comes from this script's own
+# location, never from input.
+# shellcheck source=omawidgets-probe-gpu
+source "${BASH_SOURCE[0]%/*}/omawidgets-probe-gpu"
+omawidgets_probe_gpu
+
+# --------------------------------------------------------------------- battery
+
+for supply in /sys/class/power_supply/*; do
+  [[ -r $supply/type ]] || continue
+  [[ $(<"$supply/type") == Battery ]] || continue
+  emit battery.name "$(basename -- "$supply")"
+  emit_path battery.cycles "$supply/cycle_count"
+  emit_path battery.threshold.start "$supply/charge_control_start_threshold"
+  emit_path battery.threshold.end "$supply/charge_control_end_threshold"
+  break
+done
+
+exit 0
