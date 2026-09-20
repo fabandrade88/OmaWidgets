@@ -4,6 +4,31 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.0.1] — 2026-09-21
+
+### Fixed
+
+- **Picking a position applied the previous pick.** The service read its settings
+  from the host's `shell.barConfig` snapshot, which the shell re-pushes only when
+  the plugin or widget registry changes — not when a setting is written. The bar
+  widget now pushes its own injected settings to the service, which the bar host
+  keeps current, so the cards move on the click that asked them to.
+- **Top-anchored cards sat underneath the bar.** `ExclusionMode.Ignore` sets a
+  layer-shell exclusive zone of `-1`, which asks the compositor to disregard
+  every other surface's zone. The desktop windows now use `ExclusionMode.Normal`
+  with a zero zone: they reserve nothing themselves but stay clear of the bar,
+  on whichever edge it sits.
+- **An invalid setting overwrote a valid one.** `write()` merged a raw change
+  into an already-normalised object and persisted the result, so a value that
+  failed validation reached `shell.json` and the next read replaced it with the
+  default. The merged result is now normalised before it is written, and
+  `setPosition` rejects an unknown position outright rather than falling back.
+
+### Added
+
+- `omarchy-shell omawidgets-bar position <name>` to move the cards from a script
+  or a keybind.
+
 ## [1.0.0] — 2026-09-21
 
 First release.

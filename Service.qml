@@ -21,11 +21,27 @@ Item {
   readonly property string pluginId: manifest && manifest.id
     ? String(manifest.id) : "io.github.fabandrade88.omawidgets"
 
-  // The service entry point is handed no settings of its own, so it reads the
-  // inline values off its own bar layout entry — the same object the bar widget
-  // is given, which keeps one source of truth for both.
-  readonly property var config: Settings.normalize(
-    shell ? Settings.fromBarConfig(shell.barConfig, pluginId) : ({}))
+  // Settings, from the bar widget when one is mounted and from the host's bar
+  // config snapshot before that.
+  //
+  // The snapshot cannot be the live source: `shell.barConfig` is pushed onto the
+  // plugin facade by the host, and only when the plugin registry or the widget
+  // registry changes — not when a setting is written. Reading it on every change
+  // left the desktop cards one write behind, so picking a position appeared to
+  // apply the position picked before it. The bar widget's own `settings` are
+  // re-injected by the bar host as soon as they change, so it pushes them here
+  // and the cards move on the click that asked them to.
+  property var pushedSettings: null
+
+  readonly property var config: Settings.normalize(pushedSettings !== null
+    ? pushedSettings
+    : (shell ? Settings.fromBarConfig(shell.barConfig, pluginId) : ({})))
+
+  // Called by the bar widget whenever its injected settings change. Idempotent,
+  // because one bar widget instance exists per monitor and each one pushes.
+  function applySettings(next) {
+    pushedSettings = next === undefined || next === null ? ({}) : next
+  }
 
   // Set by the surfaces that are not the desktop layer, so a closed overlay and
   // a closed popup leave nothing running.
@@ -131,7 +147,9 @@ Item {
   Connections {
     target: hardwareProbe
     function onRefreshed() {
-      if (!root.sampling) return
+      // The probe can report back while the plugin is being torn down for a
+      // hot-reload, at which point `root` is already gone.
+      if (!root || !root.sampling) return
       systemService.sample()
       gpuMetrics.sample()
     }

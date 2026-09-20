@@ -32,10 +32,16 @@ Panel {
   // updateEntryInline replaces the whole entry, so every write sends the full
   // normalised object rather than a patch. Normalising on the way out also means
   // a hand-edited file is repaired the first time a setting is touched.
+  //
+  // The merged result is normalised too, not just the starting point. Merging a
+  // raw change into an already-normalised object and persisting that would write
+  // an invalid value to shell.json, which the next read then silently replaces
+  // with the default — losing the user's setting instead of ignoring bad input.
   function write(changes) {
     if (!bar || !bar.shell || typeof bar.shell.updateEntryInline !== "function") return
-    var next = Settings.normalize(settings)
-    for (var key in changes) next[key] = changes[key]
+    var merged = Settings.normalize(settings)
+    for (var key in changes) merged[key] = changes[key]
+    var next = Settings.normalize(merged)
     settings = next
     bar.shell.updateEntryInline(moduleName, next)
   }
@@ -60,8 +66,13 @@ Panel {
     write({ cards: cards })
   }
 
+  // An unknown position leaves the cards where they are. Normalising alone would
+  // fall back to the default, which for someone who asked for something that
+  // does not exist is a worse answer than doing nothing.
   function setPosition(position) {
+    if (Settings.POSITIONS.indexOf(String(position)) === -1) return false
     write({ position: position })
+    return true
   }
 
   function setProfile(profile) {
@@ -77,6 +88,18 @@ Panel {
   // is open. Both edges matter: a popup left open would otherwise poll forever.
   onOpenedChanged: if (service) service.panelViewing = opened
   Component.onDestruction: if (service) service.panelViewing = false
+
+  // The bar host re-injects `settings` as soon as they change on disk, which
+  // makes this widget the only live view of them. The service's own snapshot
+  // updates a beat later, so the settings are pushed there rather than read
+  // back — otherwise the desktop cards act on the previous write.
+  function pushSettings() {
+    if (service) service.applySettings(settings)
+  }
+
+  onSettingsChanged: pushSettings()
+  onServiceChanged: pushSettings()
+  Component.onCompleted: pushSettings()
 
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -102,6 +125,14 @@ Panel {
     function toggle(): void { root.toggle() }
     // Flips the desktop cards without opening anything, for a Hyprland keybind.
     function toggleDesktop(): string { root.toggleDesktop(); return root.config.desktop ? "shown" : "hidden" }
+
+    // Move the cards from a script or a keybind. Settings.normalize rejects a
+    // position that does not exist, so the reply says what actually happened
+    // rather than echoing the request back.
+    function position(name: string): string {
+      root.setPosition(name)
+      return root.config.position
+    }
   }
 
   KeyboardPanel {

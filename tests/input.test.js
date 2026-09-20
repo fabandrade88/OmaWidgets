@@ -138,6 +138,28 @@ t.deep(Settings.visibleCards(undefined, true), ["system", "pods", "battery", "po
 t.deep(Settings.visibleCards(Settings.normalize({ cards: [] }), true), [],
   "no cards wanted, none drawn")
 
+// Writing a setting merges a raw change into a normalised object and then
+// normalises the result. Skipping that second pass persisted the raw value, and
+// the next read replaced it with the default — so a bad input lost the user's
+// setting rather than being ignored.
+function write(current, changes) {
+  var merged = Settings.normalize(current)
+  for (var key in changes) merged[key] = changes[key]
+  return Settings.normalize(merged)
+}
+
+t.eq(write({ position: "bottom-left" }, { position: "top-center" }).position, "top-center",
+  "a valid change is written through")
+t.eq(write({ position: "bottom-left" }, { cardWidth: 300 }).cardWidth, 300,
+  "an unrelated change leaves the rest alone")
+t.eq(write({ position: "bottom-left" }, { cardWidth: 9000 }).cardWidth, 520,
+  "an out-of-range change is clamped before it is persisted, not after")
+t.eq(write({ position: "bottom-left" }, { cards: ["system", "bogus"] }).cards.length, 1,
+  "an unknown card never reaches shell.json")
+t.eq(Settings.POSITIONS.indexOf("nowhere"), -1,
+  "an unknown position is rejected by the setter before write() ever sees it")
+t.eq(Settings.POSITIONS.length, 8, "there are eight positions, and no centre")
+
 var anchors = Settings.anchorsFor("bottom-center")
 t.eq(anchors.bottom, true, "bottom-center anchors to the bottom edge")
 t.eq(anchors.left, false, "bottom-center anchors to neither side")

@@ -57,8 +57,15 @@ Item {
       // The cards are clickable but never take the keyboard: a desktop widget
       // that stole focus from the focused window would be a bug, not a feature.
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-      // Reserves no space, so windows tile over the whole screen as before.
-      exclusionMode: ExclusionMode.Ignore
+      // Reserve no space of our own, but respect everyone else's.
+      //
+      // ExclusionMode.Ignore sets a layer-shell exclusive zone of -1, which asks
+      // the compositor to ignore every other surface's zone — so a top-anchored
+      // card landed underneath the bar. Normal with a zero zone is the pair that
+      // means "reserve nothing, but stay clear of the bar", and it works the
+      // same whichever edge the user has put the bar on.
+      exclusionMode: ExclusionMode.Normal
+      exclusiveZone: 0
 
       anchors {
         top: root.placement.top

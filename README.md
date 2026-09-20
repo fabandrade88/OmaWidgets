@@ -146,7 +146,11 @@ omarchy-shell omawidgets refresh             # re-probe hardware and re-read eve
 omarchy-shell omawidgets profile             # print the active power profile
 omarchy-shell omawidgets setProfile balanced # set it (rejects anything else)
 omarchy-shell omawidgets-bar toggleDesktop   # show or hide the desktop cards
+omarchy-shell omawidgets-bar position top-left   # move the cards; prints where they ended up
 ```
+
+`position` takes any of the eight names in the table below. An unknown one
+leaves the cards where they are and prints the position they are still in.
 
 ## Settings
 
@@ -158,7 +162,7 @@ typo costs you one setting rather than the widget.
 | Key | Default | |
 |---|---|---|
 | `desktop` | `true` | Draw the cards on the desktop |
-| `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right` |
+| `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right`. Margins are measured from the usable area, so the cards clear the bar whichever edge it is on |
 | `cards` | all four | Any of `system`, `pods`, `battery`, `power`, in the order you want them |
 | `columns` | `1` | 1–4 on the desktop. The overlay always spreads them across one row |
 | `cardWidth` | `268` | 180–520 pixels |

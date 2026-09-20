@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.fabandrade88.omawidgets",
   "name": "OmaWidgets",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Fabricio Oliveira de Andrade",
   "license": "MIT",
   "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, AirPods battery and listening mode, battery status, and a one-click power profile switch. Themed entirely from the active Omarchy theme.",
