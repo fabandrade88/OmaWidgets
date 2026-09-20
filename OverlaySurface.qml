@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
+import "model/Layout.js" as Layout
 import "model/Settings.js" as Settings
 
 // The same cards on a dimmed full-screen surface, summoned by keybind.
@@ -18,6 +19,7 @@ Item {
   required property var gpuService
   required property var pods
   required property var power
+  required property var media
   property var config: Settings.DEFAULTS
   property bool opened: false
 
@@ -31,13 +33,16 @@ Item {
   // off the stack would make the stack's config depend on the stack's own
   // contents, which is a binding loop QML resolves by handing out undefined.
   readonly property var baseSettings: Settings.normalize(config)
-  readonly property int cardCount: Settings.visibleCards(
-    baseSettings, !!(pods && pods.hasBattery)).length
+  readonly property int cardCount: Layout.visibleCards(baseSettings, {
+    hasPods: !!(pods && pods.hasBattery),
+    hasMedia: !!(media && media.hasMedia)
+  }).length
 
   readonly property var overlayConfig: {
     var merged = ({})
     for (var key in baseSettings) merged[key] = baseSettings[key]
-    merged.columns = Math.max(1, Math.min(4, cardCount))
+    merged.columns = Math.max(1, Math.min(6, cardCount))
+    // The overlay has the whole screen, so it always shows the full cards.
     merged.compact = false
     return merged
   }
@@ -79,6 +84,7 @@ Item {
         gpuService: root.gpuService
         pods: root.pods
         power: root.power
+        media: root.media
         config: root.overlayConfig
         onProfileRequested: function (profile) { root.profileRequested(profile) }
 

@@ -102,7 +102,7 @@ t.eq(Settings.normalize({ intervalMs: 9e9 }).intervalMs, 60000, "a huge interval
 t.eq(Settings.normalize({ intervalMs: "abc" }).intervalMs, 2000, "an unparseable interval falls back")
 t.eq(Settings.normalize({ cardWidth: -50 }).cardWidth, 180, "a negative card width is clamped")
 t.eq(Settings.normalize({ opacity: 4 }).opacity, 1, "opacity is clamped to one")
-t.eq(Settings.normalize({ columns: 99 }).columns, 4, "columns are clamped")
+t.eq(Settings.normalize({ columns: 99 }).columns, 6, "columns are clamped")
 t.eq(Settings.normalize({ position: "somewhere" }).position, "top-right", "an unknown position falls back")
 t.eq(Settings.normalize({ desktop: "false" }).desktop, false, "a stringified boolean is honoured")
 t.eq(Settings.normalize({ desktop: 0 }).desktop, true, "a nonsense boolean falls back to the default")
@@ -124,48 +124,6 @@ t.deep(Settings.fromBarConfig(barConfig, "absent"), {}, "a plugin with no entry 
 t.deep(Settings.fromBarConfig(null, "mine"), {}, "no bar config, no settings")
 t.deep(Settings.fromBarConfig({ layout: { right: "not-an-array" } }, "mine"), {},
   "a malformed layout section is skipped")
-
-// Which cards to draw is decided in the model so a surface can size itself
-// without reading it back off the stack it is configuring.
-t.deep(Settings.visibleCards(Settings.normalize({}), true),
-  ["system", "pods", "battery", "power"], "with AirPods reporting, every card is drawn")
-t.deep(Settings.visibleCards(Settings.normalize({}), false),
-  ["system", "battery", "power"], "with no AirPods reporting, the pods card is dropped")
-t.deep(Settings.visibleCards(Settings.normalize({ hidePodsWhenAbsent: false }), false),
-  ["system", "pods", "battery", "power"], "unless the user asked to keep it")
-t.deep(Settings.visibleCards(undefined, true), ["system", "pods", "battery", "power"],
-  "an undefined config yields the default cards rather than throwing")
-t.deep(Settings.visibleCards(Settings.normalize({ cards: [] }), true), [],
-  "no cards wanted, none drawn")
-
-// Writing a setting merges a raw change into a normalised object and then
-// normalises the result. Skipping that second pass persisted the raw value, and
-// the next read replaced it with the default — so a bad input lost the user's
-// setting rather than being ignored.
-function write(current, changes) {
-  var merged = Settings.normalize(current)
-  for (var key in changes) merged[key] = changes[key]
-  return Settings.normalize(merged)
-}
-
-t.eq(write({ position: "bottom-left" }, { position: "top-center" }).position, "top-center",
-  "a valid change is written through")
-t.eq(write({ position: "bottom-left" }, { cardWidth: 300 }).cardWidth, 300,
-  "an unrelated change leaves the rest alone")
-t.eq(write({ position: "bottom-left" }, { cardWidth: 9000 }).cardWidth, 520,
-  "an out-of-range change is clamped before it is persisted, not after")
-t.eq(write({ position: "bottom-left" }, { cards: ["system", "bogus"] }).cards.length, 1,
-  "an unknown card never reaches shell.json")
-t.eq(Settings.POSITIONS.indexOf("nowhere"), -1,
-  "an unknown position is rejected by the setter before write() ever sees it")
-t.eq(Settings.POSITIONS.length, 8, "there are eight positions, and no centre")
-
-var anchors = Settings.anchorsFor("bottom-center")
-t.eq(anchors.bottom, true, "bottom-center anchors to the bottom edge")
-t.eq(anchors.left, false, "bottom-center anchors to neither side")
-t.eq(anchors.right, false, "so layer-shell centres it horizontally")
-t.eq(Settings.anchorsFor("middle-left").left, true, "middle-left anchors to the left edge")
-t.eq(Settings.anchorsFor("middle-left").top, false, "middle-left anchors to neither top nor bottom")
 
 // ------------------------------------------------------------ probe output
 

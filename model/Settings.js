@@ -10,20 +10,26 @@ var CARD_SYSTEM = "system"
 var CARD_PODS = "pods"
 var CARD_BATTERY = "battery"
 var CARD_POWER = "power"
+var CARD_MEDIA = "media"
 
-var KNOWN_CARDS = [CARD_SYSTEM, CARD_PODS, CARD_BATTERY, CARD_POWER]
+// Also the canonical order: a card toggled off and back on returns to its
+// place here rather than to the end of the list.
+var KNOWN_CARDS = [CARD_SYSTEM, CARD_MEDIA, CARD_PODS, CARD_BATTERY, CARD_POWER]
+
+// Kept in step with Layout.POSITIONS by tests/input.test.js. Duplicated rather
+// than imported because a QML `.import` would stop `node` loading this file.
+var POSITIONS = [
+  "top-left", "top-center", "top-right",
+  "middle-left", "middle-right",
+  "bottom-left", "bottom-center", "bottom-right"
+]
 
 var CARD_NAMES = {}
 CARD_NAMES[CARD_SYSTEM] = "Performance"
 CARD_NAMES[CARD_PODS] = "AirPods"
 CARD_NAMES[CARD_BATTERY] = "Battery"
 CARD_NAMES[CARD_POWER] = "Power profile"
-
-var POSITIONS = [
-  "top-left", "top-center", "top-right",
-  "middle-left", "middle-right",
-  "bottom-left", "bottom-center", "bottom-right"
-]
+CARD_NAMES[CARD_MEDIA] = "Now playing"
 
 var DEFAULTS = {
   desktop: true,
@@ -39,7 +45,16 @@ var DEFAULTS = {
   cards: KNOWN_CARDS.slice(),
   monitor: "",
   hidePodsWhenAbsent: true,
-  showCoreBars: true
+  hideMediaWhenIdle: true,
+  showCoreBars: true,
+  // Compact mode's own geometry. A tile is square, so one number sizes it.
+  tileSize: 132,
+  // Rounded on purpose, and independent of Style.cornerRadius: a theme with
+  // square corners still wants its small tiles rounded, which is the whole
+  // visual idea of compact mode.
+  tileRadius: 18,
+  albumArt: true,
+  preferredPlayer: ""
 }
 
 function bool(value, fallback) {
@@ -95,6 +110,7 @@ function monitorName(value) {
 function normalize(raw) {
   var source = raw && typeof raw === "object" ? raw : {}
   var position = String(source.position || "").trim()
+  var compact = bool(source.compact, DEFAULTS.compact)
   return {
     desktop: bool(source.desktop, DEFAULTS.desktop),
     position: POSITIONS.indexOf(position) !== -1 ? position : DEFAULTS.position,
@@ -102,9 +118,11 @@ function normalize(raw) {
     marginY: int(source.marginY, DEFAULTS.marginY, 0, 400),
     cardWidth: int(source.cardWidth, DEFAULTS.cardWidth, 180, 520),
     spacing: int(source.spacing, DEFAULTS.spacing, 0, 48),
-    columns: int(source.columns, DEFAULTS.columns, 1, 4),
+    // Compact tiles are small, so a single column wastes the space a full card
+    // needs. The default follows the mode rather than the other way round.
+    columns: int(source.columns, compact ? 2 : DEFAULTS.columns, 1, 6),
     opacity: real(source.opacity, DEFAULTS.opacity, 0.2, 1),
-    compact: bool(source.compact, DEFAULTS.compact),
+    compact: compact,
     // The floor is 500ms deliberately. Every sample is a handful of small
     // virtual-file reads, but a user who types 10 into the interval field should
     // not be able to turn a widget into a busy loop inside the shell process.
@@ -112,7 +130,14 @@ function normalize(raw) {
     cards: cardList(source.cards),
     monitor: monitorName(source.monitor),
     hidePodsWhenAbsent: bool(source.hidePodsWhenAbsent, DEFAULTS.hidePodsWhenAbsent),
-    showCoreBars: bool(source.showCoreBars, DEFAULTS.showCoreBars)
+    hideMediaWhenIdle: bool(source.hideMediaWhenIdle, DEFAULTS.hideMediaWhenIdle),
+    showCoreBars: bool(source.showCoreBars, DEFAULTS.showCoreBars),
+    tileSize: int(source.tileSize, DEFAULTS.tileSize, 88, 260),
+    tileRadius: int(source.tileRadius, DEFAULTS.tileRadius, 0, 64),
+    albumArt: bool(source.albumArt, DEFAULTS.albumArt),
+    // Matched against the player's identity, D-Bus name or desktop entry, and
+    // never used as anything but a substring comparison.
+    preferredPlayer: monitorName(source.preferredPlayer)
   }
 }
 
@@ -135,41 +160,6 @@ function fromBarConfig(barConfig, pluginId) {
   return {}
 }
 
-// Which screen edges the desktop window anchors to, and how the stack aligns
-// inside it. A corner window is sized to its content rather than the screen, so
-// the rest of the wallpaper keeps its own click handling.
-function anchorsFor(position) {
-  var name = POSITIONS.indexOf(String(position)) !== -1 ? String(position) : DEFAULTS.position
-  var parts = name.split("-")
-  var vertical = parts[0]
-  var horizontal = parts[1]
-  return {
-    top: vertical === "top",
-    bottom: vertical === "bottom",
-    left: horizontal === "left",
-    right: horizontal === "right",
-    centerHorizontally: horizontal === "center",
-    centerVertically: vertical === "middle"
-  }
-}
-
-// Which of the wanted cards are worth drawing right now. A card whose subject is
-// absent is dropped rather than shown empty, so a machine with no AirPods daemon
-// does not carry a permanent "nothing here" card.
-//
-// This lives here rather than in CardStack so a surface can size itself from the
-// same answer without reading it back off the stack it is about to configure.
-function visibleCards(config, hasPods) {
-  var settings = config && Array.isArray(config.cards) ? config : normalize(config)
-  var out = []
-  for (var i = 0; i < settings.cards.length; i++) {
-    var id = settings.cards[i]
-    if (id === CARD_PODS && settings.hidePodsWhenAbsent && !hasPods) continue
-    out.push(id)
-  }
-  return out
-}
-
 function cardName(id) {
   return CARD_NAMES[String(id || "")] || ""
 }
@@ -177,15 +167,13 @@ function cardName(id) {
 if (typeof module !== "undefined") {
   module.exports = {
     CARD_SYSTEM: CARD_SYSTEM, CARD_PODS: CARD_PODS,
-    CARD_BATTERY: CARD_BATTERY, CARD_POWER: CARD_POWER,
+    CARD_BATTERY: CARD_BATTERY, CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA,
     KNOWN_CARDS: KNOWN_CARDS,
     POSITIONS: POSITIONS,
     DEFAULTS: DEFAULTS,
     normalize: normalize,
     fromBarConfig: fromBarConfig,
-    anchorsFor: anchorsFor,
     cardList: cardList,
-    visibleCards: visibleCards,
     cardName: cardName
   }
 }

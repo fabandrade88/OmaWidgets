@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.fabandrade88.omawidgets",
   "name": "OmaWidgets",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "Fabricio Oliveira de Andrade",
   "license": "MIT",
-  "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, AirPods battery and listening mode, battery status, and a one-click power profile switch. Themed entirely from the active Omarchy theme.",
+  "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, now playing with transport controls, AirPods battery, battery status, and a one-click power profile switch. A compact mode turns them into small rounded tiles. Themed entirely from the active Omarchy theme.",
   "kinds": [
     "service",
     "bar-widget",
@@ -18,7 +18,7 @@
   },
   "barWidget": {
     "displayName": "OmaWidgets",
-    "description": "macOS-style desktop cards for performance, AirPods, battery and power profile.",
+    "description": "macOS-style desktop cards for performance, media, AirPods, battery and power profile, with a compact rounded-tile mode.",
     "category": "System",
     "allowMultiple": false,
     "defaultSection": "right",
@@ -33,10 +33,21 @@
       "opacity": 0.92,
       "compact": false,
       "intervalMs": 2000,
-      "cards": ["system", "pods", "battery", "power"],
+      "cards": [
+        "system",
+        "media",
+        "pods",
+        "battery",
+        "power"
+      ],
       "monitor": "",
       "hidePodsWhenAbsent": true,
-      "showCoreBars": true
+      "showCoreBars": true,
+      "hideMediaWhenIdle": true,
+      "tileSize": 132,
+      "tileRadius": 18,
+      "albumArt": true,
+      "preferredPlayer": ""
     },
     "schema": [
       {
@@ -57,8 +68,8 @@
         "key": "cards",
         "type": "string",
         "label": "Cards to show, in order",
-        "description": "Any of system, pods, battery, power.",
-        "defaultValue": "system,pods,battery,power"
+        "description": "Any of system, media, pods, battery, power.",
+        "defaultValue": "system,media,pods,battery,power"
       },
       {
         "key": "columns",
@@ -101,8 +112,9 @@
       {
         "key": "compact",
         "type": "boolean",
-        "label": "Compact cards",
-        "defaultValue": false
+        "label": "Compact mode",
+        "defaultValue": false,
+        "description": "Replaces the full cards with small rounded tiles, one per reading. Not the same cards with less padding."
       },
       {
         "key": "showCoreBars",
@@ -129,6 +141,40 @@
         "type": "boolean",
         "label": "Hide the AirPods card when no device is reporting",
         "defaultValue": true
+      },
+      {
+        "key": "tileSize",
+        "type": "number",
+        "label": "Tile size in pixels",
+        "description": "88 to 260. Tiles are square, so one number sizes them.",
+        "defaultValue": 132
+      },
+      {
+        "key": "tileRadius",
+        "type": "number",
+        "label": "Tile corner radius in pixels",
+        "description": "0 to 64. Independent of the theme's corner radius, so a square theme can still have rounded tiles.",
+        "defaultValue": 18
+      },
+      {
+        "key": "hideMediaWhenIdle",
+        "type": "boolean",
+        "label": "Hide the media card when nothing is playing",
+        "defaultValue": true
+      },
+      {
+        "key": "albumArt",
+        "type": "boolean",
+        "label": "Show album art",
+        "description": "Cover art from a streaming player is fetched from that service's CDN. Turn this off to keep the shell off the network.",
+        "defaultValue": true
+      },
+      {
+        "key": "preferredPlayer",
+        "type": "string",
+        "label": "Preferred media player",
+        "description": "Matched against the player's name, for example 'spotify'. Leave empty to follow whatever is playing.",
+        "defaultValue": ""
       }
     ]
   }

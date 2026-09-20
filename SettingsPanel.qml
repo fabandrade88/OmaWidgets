@@ -23,6 +23,8 @@ Column {
   signal coreBarsToggled()
   signal overlayRequested()
   signal profileRequested(string profile)
+  signal columnsChanged(int columns)
+  signal tileSizeChanged(int size)
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -58,16 +60,42 @@ Column {
 
   ToggleRow {
     width: parent.width
-    label: "Compact cards"
-    description: "Tighter padding and no per-core bars."
+    label: "Compact tiles"
+    description: "Small rounded squares, one per reading, instead of the full cards."
     checked: root.config.compact
     onToggled: root.compactToggled()
   }
 
+  StepperRow {
+    width: parent.width
+    label: "Columns"
+    description: root.config.compact
+      ? "Tiles across before wrapping to the next row."
+      : "Cards across before wrapping to the next row."
+    value: root.config.columns
+    minimum: 1
+    maximum: 6
+    onChanged: function (value) { root.columnsChanged(value) }
+  }
+
+  StepperRow {
+    width: parent.width
+    visible: root.config.compact
+    label: "Tile size"
+    description: "Tiles are square, so one number sizes them."
+    value: root.config.tileSize
+    minimum: 88
+    maximum: 260
+    step: 4
+    suffix: "px"
+    onChanged: function (value) { root.tileSizeChanged(value) }
+  }
+
   ToggleRow {
     width: parent.width
+    visible: !root.config.compact
     label: "Per-core bars"
-    description: "One bar per CPU thread on the performance card."
+    description: "One bar per CPU thread on the performance card. Full cards only."
     checked: root.config.showCoreBars
     interactive: !root.config.compact
     onToggled: root.coreBarsToggled()

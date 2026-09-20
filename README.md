@@ -2,7 +2,8 @@
 
 <p align="center">
   Desktop widget cards for Omarchy, in the spirit of the macOS desktop.<br>
-  CPU, memory and GPU. AirPods battery. Battery status. Power profile, one click.
+  CPU, memory and GPU. Now playing. AirPods battery. Battery. Power profile, one click.<br>
+  Or the same readings as small rounded tiles.
 </p>
 
 <p align="center">
@@ -30,6 +31,23 @@ readings, two ways to look at them.
   <img src="docs/overlay.png" alt="The summoned overlay" width="760">
 </p>
 
+## Compact mode
+
+Compact is a different layout, not a smaller one. The Performance card alone
+carries three unrelated readings, and shrinking it just crushes them together —
+so in compact mode each reading gets its own square instead, with the one number
+it exists to show, a label above it and a meter along the bottom edge.
+
+Tile corners are rounded from `tileRadius`, independently of the theme's own
+corner radius: a theme with square corners still wants its small tiles rounded,
+and that softness is the whole visual idea. Everything else — colour, border,
+type — still comes from the theme.
+
+The columns and tile size are in the bar popup, and compact defaults to two
+columns because a single column of small squares wastes the space a full card
+needs. The summoned overlay always shows the full cards: it has the whole
+screen, so there is nothing to compact.
+
 ## The cards
 
 ### Performance
@@ -52,6 +70,22 @@ only with `CAP_PERFMON` or a relaxed `perf_event_paranoid` — a privilege no
 shell plugin should ask you to grant. So an Intel card shows the clock it is
 actually running at, marks a shared temperature sensor as `soc`, and says in
 one line why there is no percentage. It does not invent one.
+
+### Now playing
+
+Title, artist, album, elapsed and remaining, and the transport: previous,
+play/pause, next. It follows whatever MPRIS player is actually playing —
+Spotify, a browser tab, mpv, anything that speaks the protocol — and
+`preferredPlayer` pins it to one by name when you would rather it did not
+wander.
+
+Each button is enabled from the player's own capability flags, so a source that
+cannot skip — a live stream, most podcasts — shows the button dimmed and inert
+rather than pretending. Album art fills the tile in compact mode and sits beside
+the track on the full card.
+
+Control is native: Quickshell speaks MPRIS directly, so skipping a track costs
+one D-Bus call, not a subprocess.
 
 ### AirPods
 
@@ -147,6 +181,11 @@ omarchy-shell omawidgets profile             # print the active power profile
 omarchy-shell omawidgets setProfile balanced # set it (rejects anything else)
 omarchy-shell omawidgets-bar toggleDesktop   # show or hide the desktop cards
 omarchy-shell omawidgets-bar position top-left   # move the cards; prints where they ended up
+
+omarchy-shell omawidgets nowPlaying          # "playing<TAB>title<TAB>artist"
+omarchy-shell omawidgets playPause           # transport, for media keys or a keybind
+omarchy-shell omawidgets nextTrack
+omarchy-shell omawidgets previousTrack
 ```
 
 `position` takes any of the eight names in the table below. An unknown one
@@ -163,13 +202,18 @@ typo costs you one setting rather than the widget.
 |---|---|---|
 | `desktop` | `true` | Draw the cards on the desktop |
 | `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right`. Margins are measured from the usable area, so the cards clear the bar whichever edge it is on |
-| `cards` | all four | Any of `system`, `pods`, `battery`, `power`, in the order you want them |
-| `columns` | `1` | 1–4 on the desktop. The overlay always spreads them across one row |
+| `cards` | all five | Any of `system`, `media`, `pods`, `battery`, `power`, in the order you want them |
+| `columns` | `1`, or `2` in compact | 1–6 on the desktop. The overlay always spreads them across one row |
 | `cardWidth` | `268` | 180–520 pixels |
 | `spacing` | `10` | 0–48 pixels between cards |
 | `marginX` / `marginY` | `28` / `20` | Distance from the screen edges |
 | `opacity` | `0.92` | 0.2–1. The colour itself comes from the theme |
-| `compact` | `false` | Tighter padding, no per-core bars |
+| `compact` | `false` | Compact tiles instead of full cards |
+| `tileSize` | `132` | 88–260 pixels. Tiles are square, so one number sizes them |
+| `tileRadius` | `18` | 0–64 pixels. Independent of the theme's radius, so a square theme still gets rounded tiles |
+| `hideMediaWhenIdle` | `true` | Drop the media card when nothing is playing |
+| `albumArt` | `true` | Show cover art. See [Running someone else's code](#running-someone-elses-code) |
+| `preferredPlayer` | `""` | Pin the media card to one player by name, e.g. `spotify`. Empty follows whatever is playing |
 | `showCoreBars` | `true` | One bar per CPU thread |
 | `intervalMs` | `2000` | 500–60000. Sampling stops entirely while nothing is on screen |
 | `monitor` | `""` | A connector name such as `eDP-1`. Empty means every monitor |
@@ -214,10 +258,13 @@ Omarchy plugins run unsandboxed inside your long-lived shell process, with your
 permissions. That is true of this one too, so here is exactly what it does.
 
 **It reads.** `/proc/stat`, `/proc/meminfo`, `/proc/loadavg`, hwmon and thermal
-sensors, the GPU's sysfs nodes, the battery's cycle count, and the librepods
-status file. All of it read-only.
+sensors, the GPU's sysfs nodes, the battery's cycle count, the librepods status
+file, and MPRIS metadata over the session bus. All of it read-only.
 
-**It writes one thing.** The power profile, and only through Omarchy's own
+**It writes two things, both of them yours.** Playback, when you press a
+transport button — a `Next`, `Previous` or `PlayPause` call to the player you are
+already listening to, and only when that player reports it supports it. And the
+power profile, and only through Omarchy's own
 `omarchy-powerprofiles-set`. The profile name passes two gates before it reaches
 an argument vector: it must be one of the three names `power-profiles-daemon`
 defines, and it must appear in the list the running daemon reported for your
@@ -229,7 +276,17 @@ substitutions, shell separators, newlines, flags and case variants.
 `perf_event` access, no setuid helper. If a reading needs a privilege, the
 plugin does without the reading.
 
-**It talks to no network.** There is no HTTP client in the codebase.
+**It talks to the network in exactly one place, and you can turn it off.**
+Album art from a streaming player is a URL on that service's CDN, and showing it
+means fetching it — Spotify's art lives at `i.scdn.co`. Set `albumArt` to `false`
+and no art is loaded from anywhere; local players' `file://` art is unaffected by
+that request either way. The URL's scheme is checked before it reaches an image,
+so `https`, `http` and `file` are accepted and a `data:` blob or a `javascript:`
+string is dropped. Nothing else in the codebase opens a connection: there is no
+HTTP client, no telemetry, and no update check.
+
+For what it is worth, Omarchy's own media widget binds art URLs the same way, so
+leaving this on adds no exposure your shell did not already have.
 
 **It treats every input as hostile.** Everything it reads is text written by
 another process — a kernel that renamed a field, a daemon caught mid-write, a
@@ -277,21 +334,25 @@ SystemService.qml    CPU and memory, on a gated timer
 GpuService.qml       GPU, from sysfs or nvidia-smi
 PodsService.qml      AirPods, from an inotify watch — no timer
 PowerService.qml     UPower, and the power profile
+MediaService.qml     MPRIS: player selection and transport
 HardwareProbe.qml    runs scripts/omawidgets-probe once per session
 
 DesktopSurface.qml   layer-shell windows on WlrLayer.Bottom, one per screen
 OverlaySurface.qml   the dimmed full-screen surface
-CardStack.qml        the arrangement both surfaces share
+CardStack.qml        picks the layout; CardColumn.qml and TileGrid.qml are the two
 
-SystemCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
-Card.qml  MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml
-CoreBars.qml  PodPill.qml  ProfileSelector.qml  ToggleRow.qml  PositionGrid.qml
+SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
+Card.qml  Tile.qml  MediaTile.qml  MediaControls.qml
+MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
+PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml
 
 model/Sysfs.js       /proc and hwmon parsers
+model/Media.js       MPRIS player selection and track presentation
+model/Layout.js      which cards are worth drawing, and what they become as tiles
 model/Gpu.js         one shape from three driver families
 model/Pods.js        the librepods status file, defensively
 model/Power.js       battery presentation, and the profile allowlist
-model/Settings.js    normalisation, clamping, and desktop placement
+model/Settings.js    normalisation and clamping
 model/Format.js      numbers and units
 model/Series.js      bounded sample history
 model/Probe.js       the probe's output, and the path allowlist
@@ -314,6 +375,9 @@ stops being: a file that outgrows the limit is doing more than one job.
   three driver families, bounded history.
 - **`input.test.js`** — the paths where being wrong has consequences: the power
   profile allowlist, truncated and hostile librepods JSON, hand-edited settings.
+- **`layout.test.js`** — card and tile arrangement, window anchoring, and which
+  player the media card should follow, including the QML-list case that is
+  indexable but is not a JavaScript `Array`.
 - **`glyphs.test.js`** — every Nerd Font glyph in the source, against the font
   the bar actually uses. It catches both a codepoint the font lacks and a
   malformed surrogate pair, which is not one character at all and looks like a

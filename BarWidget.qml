@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "model/Layout.js" as Layout
 import "model/Settings.js" as Settings
 
 // Bar widget entry point: the icon in the bar, and the popup that configures the
@@ -70,7 +71,7 @@ Panel {
   // fall back to the default, which for someone who asked for something that
   // does not exist is a worse answer than doing nothing.
   function setPosition(position) {
-    if (Settings.POSITIONS.indexOf(String(position)) === -1) return false
+    if (Layout.POSITIONS.indexOf(String(position)) === -1) return false
     write({ position: position })
     return true
   }
@@ -178,6 +179,8 @@ Panel {
           onPositionPicked: function (position) { root.setPosition(position) }
           onOverlayRequested: root.openOverlay()
           onProfileRequested: function (profile) { root.setProfile(profile) }
+          onColumnsChanged: function (value) { root.write({ columns: value }) }
+          onTileSizeChanged: function (value) { root.write({ tileSize: value }) }
         }
       }
     }

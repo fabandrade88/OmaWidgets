@@ -4,6 +4,51 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.1.0] — 2026-09-21
+
+### Added
+
+- **A Now playing card**, over MPRIS. Title, artist, album, elapsed and
+  remaining, album art, and the transport: previous, play/pause, next. It
+  follows whatever player is actually playing — Spotify, a browser tab, mpv —
+  and `preferredPlayer` pins it to one by name. Each button is enabled from the
+  player's own capability flags, so a source that cannot skip shows the button
+  dimmed rather than pretending. Control is a D-Bus call, not a subprocess.
+- `omarchy-shell omawidgets nowPlaying`, `playPause`, `nextTrack` and
+  `previousTrack`, for media keys and scripts.
+- **Columns and tile size in the bar popup**, so compact mode can be arranged
+  without editing `shell.json`.
+- `albumArt`, `preferredPlayer`, `hideMediaWhenIdle`, `tileSize` and
+  `tileRadius` settings.
+
+### Changed
+
+- **Compact mode is now a different layout, not a smaller one.** It was full
+  cards with tighter padding, which barely saved anything — the Performance card
+  alone carries three unrelated readings. Compact now draws one rounded square
+  per reading: the single number it exists for, a label above it and a meter
+  along the bottom edge. Tile corners come from `tileRadius` independently of the
+  theme's own radius, so a square theme still gets rounded tiles.
+- Compact defaults to two columns; a single column of small squares wastes the
+  space a full card needs.
+- The glyph test now rejects a bare BMP private-use character. Every icon here is
+  nf-md, which lives in the supplementary plane and always arrives as a surrogate
+  pair — so a lone BMP code unit is the exact signature of a five-digit `\uXXXXX`
+  escape truncated to four, which renders as a real but entirely wrong glyph.
+  It also rejects unexpected non-ASCII text characters, which is the other half
+  of the same mistake.
+
+### Fixed
+
+- **The media card stayed empty while a player sat there with a title.**
+  `Mpris.players.values` is a QML list: indexable, with a length, and not a
+  JavaScript `Array`. Guarding with `Array.isArray` silently yielded an empty
+  list. Player selection also had to start watching every player rather than the
+  selected one — selection depends on whether a player has a title yet, so before
+  the first one loads there is no selection to watch.
+- Four glyphs were the wrong picture: the transport icons now use the same
+  codepoints the stock Omarchy media widget does.
+
 ## [1.0.1] — 2026-09-21
 
 ### Fixed

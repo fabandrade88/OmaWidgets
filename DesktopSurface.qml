@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Ui
+import "model/Layout.js" as Layout
 import "model/Settings.js" as Settings
 
 // The cards on the wallpaper, the way macOS puts widgets on the desktop.
@@ -21,12 +22,13 @@ Item {
   required property var gpuService
   required property var pods
   required property var power
+  required property var media
   property var config: Settings.DEFAULTS
   property bool showCards: true
 
   signal profileRequested(string profile)
 
-  readonly property var placement: Settings.anchorsFor(config.position)
+  readonly property var placement: Layout.anchorsFor(config.position)
 
   // An empty `monitor` setting means every screen. A name that matches nothing
   // yields no surface, which is the honest outcome of asking for a screen that
@@ -96,6 +98,7 @@ Item {
         gpuService: root.gpuService
         pods: root.pods
         power: root.power
+        media: root.media
         config: root.config
         onProfileRequested: function (profile) { root.profileRequested(profile) }
       }

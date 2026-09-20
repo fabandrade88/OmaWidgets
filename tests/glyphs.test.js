@@ -65,6 +65,10 @@ if (!fs.existsSync(FONT)) {
   process.exit(0)
 }
 
+// Degree sign, middle dot, em dash, minus sign. Everything else non-ASCII in
+// this codebase should be a Nerd Font icon.
+var ALLOWED_TEXT = [0x00B0, 0x00B7, 0x2014, 0x2212, 0x2018, 0x2019, 0x201C, 0x201D, 0x2026]
+
 var codes = cmapCodepoints(FONT)
 var root = path.join(__dirname, "..")
 var ESCAPE = /\\u([0-9a-fA-F]{4})/g
@@ -75,6 +79,7 @@ var ESCAPE = /\\u([0-9a-fA-F]{4})/g
 function checkCharacters(line, where) {
   for (var i = 0; i < line.length; i++) {
     var unit = line.charCodeAt(i)
+    if (unit < 0x80) continue
     // Surrogates come first: a code unit in D800..DFFF is numerically BELOW
     // 0xE000, so testing the private-use floor first would skip every glyph
     // above the basic plane — which is all of them.
@@ -94,7 +99,23 @@ function checkCharacters(line, where) {
       t.ok(false, where + ": an unpaired low surrogate at column " + (i + 1))
       continue
     }
-    if (unit < 0xE000) continue
+    // Every icon in this codebase is nf-md, which lives in the SUPPLEMENTARY
+    // private-use plane and therefore always arrives as a surrogate pair. A bare
+    // code unit in the BMP private-use area (E000-F8FF) is the exact signature of
+    // a truncated escape: QML reads four hex digits after \\u, so a five-digit
+    // codepoint like \\uF075A becomes U+F075 plus a stray "A". It renders, the
+    // font even has a glyph there, and it is not the icon anyone meant.
+    if (unit >= 0xE000 && unit <= 0xF8FF) {
+      t.ok(false, where + ": U+" + unit.toString(16).toUpperCase()
+        + " is a bare BMP private-use character — a five-digit \\u escape truncated?")
+      continue
+    }
+    if (unit < 0xE000) {
+      t.ok(ALLOWED_TEXT.indexOf(unit) !== -1,
+        where + ": unexpected non-ASCII U+" + unit.toString(16).toUpperCase()
+          + " (" + line.charAt(i) + ")")
+      continue
+    }
     t.ok(codes[unit] === true,
       where + ": U+" + unit.toString(16).toUpperCase() + " is not in " + path.basename(FONT))
   }

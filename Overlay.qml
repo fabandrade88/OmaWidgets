@@ -66,6 +66,7 @@ Item {
       gpuService: root.service.gpuService
       pods: root.service.pods
       power: root.service.power
+      media: root.service.media
       config: root.service.config
       onDismissed: root.dismiss()
       onProfileRequested: function (profile) { root.service.setProfile(profile) }

@@ -60,6 +60,7 @@ Item {
   readonly property alias gpuService: gpuMetrics
   readonly property alias pods: podsService
   readonly property alias power: powerService
+  readonly property alias media: mediaService
 
   function setProfile(profile) {
     return powerService.setProfile(profile)
@@ -116,12 +117,19 @@ Item {
     probe: hardwareProbe
   }
 
+  MediaService {
+    id: mediaService
+    active: root.sampling
+    preferredPlayer: root.config.preferredPlayer
+  }
+
   DesktopSurface {
     id: desktop
     system: systemService
     gpuService: gpuMetrics
     pods: podsService
     power: powerService
+    media: mediaService
     config: root.config
     showCards: root.config.desktop
     onProfileRequested: function (profile) { root.setProfile(profile) }
@@ -136,6 +144,17 @@ Item {
     function show(): string { return root.shell && root.shell.summon(root.pluginId, "{}") ? "ok" : "unavailable" }
     function hide(): string { return root.hideOverlay() ? "ok" : "unavailable" }
     function refresh(): string { root.refresh(); return "ok" }
+
+    // What the media card is showing, for a status line or a script.
+    function nowPlaying(): string {
+      if (!root.media.hasMedia) return root.media.anyPlayerRunning ? "no track" : "no player"
+      var track = root.media.track
+      return (track.isPlaying ? "playing" : "paused") + "\t" + track.title + "\t" + track.artist
+    }
+
+    function playPause(): string { root.media.toggle(); return "ok" }
+    function nextTrack(): string { root.media.next(); return "ok" }
+    function previousTrack(): string { root.media.previous(); return "ok" }
 
     // Reads the current profile, and sets it only through the allowlisted path.
     function profile(): string { return root.power.activeProfile }
