@@ -30,9 +30,13 @@ Item {
     spacing: Math.max(1, Style.space(1))
 
     Repeater {
-      model: root.loads
+      // The count, not the array — see HistoryGraph. The core count does not
+      // change while the machine is running, so these are built once.
+      model: root.count
 
       Item {
+        readonly property real load: index < root.count ? root.loads[index] : -1
+
         width: Math.max(2, (root.width - Math.max(1, Style.space(1)) * Math.max(0, root.count - 1))
           / Math.max(1, root.count))
         height: root.height
@@ -48,9 +52,9 @@ Item {
           width: parent.width
           // A known zero still draws a hairline, so an idle core is visibly a
           // reading rather than a gap where a bar should be.
-          height: modelData < 0 ? 0 : Math.max(1, parent.height * Math.min(1, modelData))
+          height: parent.load < 0 ? 0 : Math.max(1, parent.height * Math.min(1, parent.load))
           radius: Style.cornerRadius > 0 ? width / 2 : 0
-          color: modelData >= root.hotFraction ? Color.urgent : root.fill
+          color: parent.load >= root.hotFraction ? Color.urgent : root.fill
 
           Behavior on height {
             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }

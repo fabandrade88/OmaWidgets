@@ -7,10 +7,21 @@
 // fallback so a caller never handles undefined.
 var MAX_LINES = 200
 var MAX_VALUE_LENGTH = 512
+// The probe's whole output. A value this side of a megabyte is already absurd
+// for a list of sysfs paths; refusing outright beats splitting it first.
+var MAX_OUTPUT = 64 * 1024
+
+// The only programs this plugin will run from a discovered path. A path that is
+// read is one thing; a path that is executed is another, and it gets its own
+// list rather than sharing the sysfs one — which is what silently disabled
+// NVIDIA support, since /usr/bin/nvidia-smi is under neither /sys nor /proc.
+var PROGRAMS = ["/usr/bin/nvidia-smi"]
 
 function parse(raw) {
   var values = {}
-  var lines = String(raw || "").split("\n")
+  var text = String(raw || "")
+  if (text.length > MAX_OUTPUT) return values
+  var lines = text.split("\n")
   var count = Math.min(lines.length, MAX_LINES)
   for (var i = 0; i < count; i++) {
     var separator = lines[i].indexOf("\t")
@@ -38,6 +49,13 @@ function path(values, key) {
   return value
 }
 
+// An executable. Matched against the list above rather than pattern-checked:
+// there are two of them, and an exact match cannot be talked around.
+function program(values, key) {
+  var value = text(values, key, "")
+  return PROGRAMS.indexOf(value) !== -1 ? value : ""
+}
+
 function number(values, key, fallback) {
   // An absent key yields "", and Number("") is 0 rather than NaN, so the empty
   // case is caught before the coercion.
@@ -52,5 +70,7 @@ function flag(values, key) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { parse: parse, text: text, path: path, number: number, flag: flag }
+  module.exports = { MAX_OUTPUT: MAX_OUTPUT, PROGRAMS: PROGRAMS,
+    parse: parse, text: text, path: path, program: program,
+    number: number, flag: flag }
 }

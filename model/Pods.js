@@ -12,6 +12,9 @@
 // field is type-checked and every level is clamped before it reaches a binding.
 var UNKNOWN = -1
 var SUPPORTED_SCHEMA = 1
+// The daemon writes one line of a few hundred bytes. Anything approaching this
+// is not that line.
+var MAX_FILE = 256 * 1024
 
 var NOISE_UNKNOWN = -1
 var NOISE_OFF = 0
@@ -75,7 +78,13 @@ function empty() {
 
 function parse(raw) {
   var status = empty()
-  var text = String(raw || "").trim()
+  var text = String(raw || "")
+  if (text.length > MAX_FILE) {
+    status.daemonRunning = true
+    status.error = "The librepods status file is implausibly large"
+    return status
+  }
+  text = text.trim()
   if (text === "") {
     status.error = "The librepods status file is empty"
     return status
@@ -125,7 +134,10 @@ function parse(raw) {
 // length cap keeps a hostile name from stretching a card off the screen.
 function text_(raw) {
   if (typeof raw !== "string") return ""
-  return raw.replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 64)
+  // Bidirectional overrides go too: a device name is chosen on someone's phone,
+  // and one that reorders what follows it can disguise the whole line.
+  return raw.replace(/[\u202A-\u202E\u2066-\u2069]/g, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 64)
 }
 
 function mode(raw) {
@@ -140,54 +152,16 @@ function lid(raw) {
   return value === LID_OPEN || value === LID_CLOSED ? value : LID_UNKNOWN
 }
 
-function noiseModeName(value) {
-  return NOISE_NAMES[value] || ""
-}
-
-function lidName(value) {
-  if (value === LID_OPEN) return "Case open"
-  if (value === LID_CLOSED) return "Case closed"
-  return ""
-}
-
-// Battery keeps arriving over BLE advertisements while the audio link is down,
-// so a card can be worth drawing even when `connected` is false.
-function hasAnyBattery(status) {
-  if (!status || !status.ok) return false
-  if (status.isHeadset) return status.headset.level > UNKNOWN
-  return status.left.level > UNKNOWN || status.right.level > UNKNOWN
-    || status.caseBattery.level > UNKNOWN
-}
-
-// The lowest pod reading is what tells you whether you can start a call, so it
-// is what the card leads with. The case is excluded: a flat case does not stop
-// you listening.
-function lowestPodLevel(status) {
-  if (!status || !status.ok) return UNKNOWN
-  var levels = status.isHeadset
-    ? [status.headset.level]
-    : [status.left.level, status.right.level]
-  var lowest = UNKNOWN
-  for (var i = 0; i < levels.length; i++) {
-    if (levels[i] <= UNKNOWN) continue
-    if (lowest === UNKNOWN || levels[i] < lowest) lowest = levels[i]
-  }
-  return lowest
-}
-
 if (typeof module !== "undefined") {
   module.exports = {
     UNKNOWN: UNKNOWN,
     SUPPORTED_SCHEMA: SUPPORTED_SCHEMA,
+    MAX_FILE: MAX_FILE,
     NOISE_UNKNOWN: NOISE_UNKNOWN, NOISE_OFF: NOISE_OFF, NOISE_ANC: NOISE_ANC,
     NOISE_TRANSPARENCY: NOISE_TRANSPARENCY, NOISE_ADAPTIVE: NOISE_ADAPTIVE,
     LID_OPEN: LID_OPEN, LID_CLOSED: LID_CLOSED, LID_UNKNOWN: LID_UNKNOWN,
     empty: empty,
     emptyPod: emptyPod,
-    parse: parse,
-    noiseModeName: noiseModeName,
-    lidName: lidName,
-    hasAnyBattery: hasAnyBattery,
-    lowestPodLevel: lowestPodLevel
+    parse: parse
   }
 }

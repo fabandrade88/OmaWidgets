@@ -4,6 +4,50 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.0] — 2026-09-21
+
+### Security
+
+- **Bidirectional override characters are stripped** from to-dos, track titles
+  and device names. They reorder the text around them, so a to-do reading
+  `GNIHTEMOS` rendered as `SOMETHING` — the Trojan Source trick. Found by
+  rendering the payload rather than by reading the code.
+- **An oversized file is refused before it becomes a string.** Quickshell's
+  `FileView` gives no way to bound a read, so the new `GuardedFile` checks the
+  byte length of what arrived and, if it is too large, stops re-reading the file
+  on every change — rechecking on a slow timer instead, and recovering by itself
+  when the file shrinks. A twenty-megabyte state file no longer compounds; it is
+  read once and then left alone.
+- 330 assertions of adversarial input across every parser: command substitutions,
+  shell separators, option-looking strings, path traversal, prototype-pollution
+  keys, unrepresentable dates and oversized values. The same payloads were then
+  written to the real files on a running shell.
+
+### Fixed
+
+- **NVIDIA GPUs reported nothing at all.** The probe finds `nvidia-smi` and the
+  GPU service asked for it through the path allowlist, which only permits `/sys`
+  and `/proc` — so the path came back empty and the NVIDIA branch never ran. A
+  path that is *executed* now has its own allowlist, separate from paths that are
+  merely read.
+- A deadline beyond what a date can represent is refused rather than stored: it
+  survived as a finite number and then produced an Invalid Date, whose every
+  accessor is NaN.
+
+### Performance
+
+- **The progress rings no longer animate their sweep.** Easing an arc
+  re-tessellates it every frame; with six rings on screen that measured at 2.6
+  points of a core, more than a third of the plugin's entire cost, to soften a
+  change that happens every two seconds. Six cards at a 2s interval went from 7.5
+  to 4.5 points. Qt's geometry renderer would have saved another 0.6 and was
+  rejected as visibly jagged at these sizes.
+- Repeaters over the history graph and the per-core bars are bound to a count
+  rather than to the array, which is rebuilt on every sample by design — binding
+  to it tore down and rebuilt all forty bars each time.
+- Confirmed by measurement: with the cards hidden the plugin costs nothing
+  measurable over the shell alone.
+
 ## [1.6.0] — 2026-09-21
 
 ### Added

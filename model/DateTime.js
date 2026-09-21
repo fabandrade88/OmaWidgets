@@ -141,8 +141,12 @@ function formatDate(date, format) {
 // The deadline said the way a person would: a time today, a weekday this week,
 // and the full date beyond that.
 function deadlineLabel(at, now, dateFmt, timeFmt) {
-  if (!(at > 0)) return ""
+  if (!(at > 0) || !isFinite(at)) return ""
   var when = new Date(at)
+  // A timestamp beyond what Date can represent yields an Invalid Date, whose
+  // every accessor is NaN — which would render as "NaN:NaN" rather than as
+  // nothing.
+  if (isNaN(when.getTime())) return ""
   var today = new Date(typeof now === "number" && now > 0 ? now : Date.now())
   var time = formatTime(when, timeFmt)
   if (when.toDateString() === today.toDateString()) return time

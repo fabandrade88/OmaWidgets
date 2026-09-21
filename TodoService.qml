@@ -123,9 +123,13 @@ Item {
     save()
   }
 
+  readonly property bool oversized: stateFile.oversized
+
   function save() {
-    if (!loaded) return
-    stateFile.setText(Todo.serialize({ items: root.items }))
+    // Refusing to write over a file that could not be read keeps a list nobody
+    // could see from being replaced by an empty one.
+    if (!loaded || oversized) return
+    writer.setText(Todo.serialize({ items: root.items }))
   }
 
   Timer {
@@ -147,6 +151,15 @@ Item {
     }
   }
 
+  // Writing is a separate view: GuardedFile owns reading, and a writer that
+  // does not watch cannot race its own change notification.
+  FileView {
+    id: writer
+    path: root.statePath
+    printErrors: false
+    atomicWrites: true
+  }
+
   Process {
     id: soundProcess
     // The freedesktop sound theme ships with every desktop; if it is missing the
@@ -164,18 +177,16 @@ Item {
     onExited: stateFile.reload()
   }
 
-  FileView {
+  GuardedFile {
     id: stateFile
     path: root.statePath
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      root.items = Todo.parse(text()).items
+    maxBytes: Todo.MAX_FILE
+    onTextLoaded: function (body) {
+      root.items = Todo.parse(body).items
       root.loaded = true
     }
     // No file yet is an empty list, not an error.
-    onLoadFailed: root.loaded = true
+    onMissing: root.loaded = true
   }
 
   Component.onCompleted: mkdirProcess.running = true

@@ -12,10 +12,16 @@ var UNKNOWN = -1
 
 var MAX_TEXT = 120
 
+// Bidirectional overrides are dropped as well as control characters: they
+// reorder what is around them, so a track title can be made to read as
+// something else.
+var BIDI_OVERRIDE = /[\u202A-\u202E\u2066-\u2069]/g
+
 function cleanText(raw, cap) {
   if (typeof raw !== "string") return ""
   var limit = typeof cap === "number" && cap > 0 ? cap : MAX_TEXT
-  return raw.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().slice(0, limit)
+  return raw.replace(BIDI_OVERRIDE, "").replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ").trim().slice(0, limit)
 }
 
 function num(value, fallback) {
@@ -133,10 +139,16 @@ function describe(player) {
 // `https` is what Spotify hands out and `file` is what local players use;
 // anything else — a `data:` blob, a `javascript:` string — is dropped.
 function artUrl(raw) {
-  var text = String(raw || "").trim()
+  var text = String(raw || "")
+  // Bounded before anything else runs over it, and a control character anywhere
+  // in it is disqualifying: a URL with a newline in it is two things pretending
+  // to be one.
+  if (text.length > 2048) return ""
+  if (/[\u0000-\u001F\u007F]/.test(text)) return ""
+  text = text.trim()
   if (text === "") return ""
   if (!/^(https|http|file):\/\//i.test(text)) return ""
-  return text.slice(0, 2048)
+  return text
 }
 
 function isRemoteArt(url) {

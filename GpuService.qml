@@ -23,7 +23,10 @@ Item {
   readonly property var history: series
   readonly property var headline: Gpu.headline(reading)
   readonly property bool usesHelper: nvidiaSmiPath !== ""
-  readonly property string nvidiaSmiPath: probe ? probe.path("gpu.nvidiaSmi") : ""
+  // program(), not path(): this one is executed rather than read, and the sysfs
+  // allowlist path() enforces would reject /usr/bin/nvidia-smi outright — which
+  // is exactly what it did, silently disabling every NVIDIA card.
+  readonly property string nvidiaSmiPath: probe ? probe.program("gpu.nvidiaSmi") : ""
 
   property var reading: Gpu.empty()
   property var series: Series.create(historyLength)

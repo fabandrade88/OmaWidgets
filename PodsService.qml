@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import "model/Pods.js" as Pods
+import "model/PodsView.js" as PodsView
 
 // AirPods readings, taken from the status file the librepods daemon publishes.
 //
@@ -23,15 +23,17 @@ Item {
 
   readonly property bool daemonRunning: status.daemonRunning
   readonly property bool connected: status.connected
-  readonly property bool hasBattery: Pods.hasAnyBattery(status)
+  readonly property bool hasBattery: PodsView.hasAnyBattery(status)
   readonly property bool schemaTooNew: status.schemaTooNew
-  readonly property string error: status.error
+  readonly property string error: stateFile.oversized
+    ? "The librepods status file is too large to read" : status.error
+  readonly property bool oversized: stateFile.oversized
   // The daemon is absent, not just quiet — the plugin is probably not installed.
   readonly property bool absent: !status.daemonRunning
 
-  readonly property int lowestLevel: Pods.lowestPodLevel(status)
-  readonly property string noiseModeName: Pods.noiseModeName(status.noiseMode)
-  readonly property string lidName: Pods.lidName(status.lidState)
+  readonly property int lowestLevel: PodsView.lowestPodLevel(status)
+  readonly property string noiseModeName: PodsView.noiseModeName(status.noiseMode)
+  readonly property string lidName: PodsView.lidName(status.lidState)
 
   // Falls back to the family name, then to a generic label, so the card always
   // has a title even for a device the daemon has not fully identified.
@@ -41,16 +43,13 @@ Item {
     stateFile.reload()
   }
 
-  FileView {
+  GuardedFile {
     id: stateFile
     path: root.statePath
-    watchChanges: true
-    // text() is stale inside the change signal, so both paths go through reload.
-    onFileChanged: reload()
-    printErrors: false
-    onLoaded: root.status = Pods.parse(text())
+    maxBytes: Pods.MAX_FILE
+    onTextLoaded: function (body) { root.status = Pods.parse(body) }
     // The daemon removes the file when it stops, so an absent file means a
     // stopped daemon rather than an error worth showing.
-    onLoadFailed: root.status = Pods.empty()
+    onMissing: root.status = Pods.empty()
   }
 }

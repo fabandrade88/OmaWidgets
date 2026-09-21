@@ -61,9 +61,13 @@ Item {
         // as a reading where there is none.
         sweepAngle: root.known ? 360 * root.clamped : 0
 
-        Behavior on sweepAngle {
-          NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
-        }
+        // Deliberately not animated. Easing the sweep re-tessellates the arc on
+        // every frame of every transition, and with six rings on screen that
+        // measured at 2.6 points of a core — more than a third of the plugin's
+        // whole cost — to soften a change that happens every two seconds and
+        // reads perfectly well as a step. The curve renderer stays: the geometry
+        // one is visibly jagged at these sizes and saves far less.
+
       }
     }
   }

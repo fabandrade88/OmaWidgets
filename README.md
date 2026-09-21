@@ -366,6 +366,29 @@ typo costs you one setting rather than the widget.
 
 ## What it costs
 
+Measured on this machine, as a percentage of one core, taking the lowest of five
+samples because a busy desktop makes any single reading meaningless:
+
+| | |
+|---|---|
+| Plugin enabled, cards hidden | **+0.0** points over the shell alone |
+| Six cards on the desktop, 2s interval | **+4.5** points |
+| Six cards, 500ms interval | +30 points |
+
+The first row is the design working: with nothing on screen every timer is
+stopped, and the plugin is indistinguishable from not having it installed. The
+third is why the interval has a floor — the cost is per update, so a quarter of
+the interval is four times the work.
+
+Getting the middle row from 7.5 to 4.5 was one change: the progress rings no
+longer animate their sweep. Easing an arc re-tessellates it on every frame, and
+with six rings on screen that was 2.6 points — more than a third of the plugin's
+entire cost — to soften a change that happens every two seconds and reads
+perfectly well as a step. Switching the rings to Qt's cheaper geometry renderer
+would have saved another 0.6, and was rejected: it is visibly jagged at these
+sizes.
+
+
 The sampling loop **spawns no processes**. Quickshell's `FileView` reads
 `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` and the sysfs nodes directly, and
 each file reports its contents back asynchronously as it loads — so nothing
@@ -424,6 +447,24 @@ HTTP client, no telemetry, and no update check.
 
 For what it is worth, Omarchy's own media widget binds art URLs the same way, so
 leaving this on adds no exposure your shell did not already have.
+
+**It has been attacked on purpose.** `tests/security.test.js` and
+`tests/hostile.test.js` push command substitutions, shell separators, option-
+looking strings, path traversal, oversized values, prototype-pollution keys and
+bidirectional overrides through every input the plugin reads — 330 assertions
+across the profile allowlist, the probe's paths, MPRIS metadata, the librepods
+file, the to-do file and `shell.json`. The same payloads were then written to the
+real files on a running shell: nothing executed, nothing crashed, and `<b>bold</b>`
+rendered as the six characters it is.
+
+Two things that found came out of it. Bidirectional override characters
+(U+202A–202E, U+2066–2069) were being rendered: a to-do reading `GNIHTEMOS`
+displayed as `SOMETHING`, which is the Trojan Source trick. They are stripped
+now, everywhere foreign text is accepted. And a file large enough to matter is
+refused before it is turned into a string — Quickshell's `FileView` has no way to
+bound a read, so an oversized file is detected by its byte length and then not
+re-read on every change, which stops a daemon rewriting a huge file from
+compounding the cost.
 
 **It treats every input as hostile.** Everything it reads is text written by
 another process — a kernel that renamed a field, a daemon caught mid-write, a
@@ -501,6 +542,7 @@ model/Todo.js        the to-do file format
 model/TodoList.js    list operations, and how close a deadline is
 model/Pomodoro.js    the focus and break cycle
 model/DateTime.js    reading and writing deadlines in the chosen format
+GuardedFile.qml      a watched file with a size it refuses to keep re-reading
 model/Gpu.js         one shape from three driver families
 model/Pods.js        the librepods status file, defensively
 model/Power.js       battery presentation, and the profile allowlist
@@ -536,6 +578,10 @@ stops being: a file that outgrows the limit is doing more than one job.
   the Pomodoro cycle.
 - **`datetime.test.js`** — parsing and formatting deadlines in every supported
   format, including dates that do not exist and the placeholders themselves.
+- **`security.test.js`** — what may reach a command, an argument vector or a
+  path.
+- **`hostile.test.js`** — what a media player registered by any application, a
+  separate daemon, or a hand-edited file may put in front of you.
 - **`glyphs.test.js`** — every Nerd Font glyph in the source, against the font
   the bar actually uses. It catches both a codepoint the font lacks and a
   malformed surrogate pair, which is not one character at all and looks like a

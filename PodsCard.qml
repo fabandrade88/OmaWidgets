@@ -2,6 +2,7 @@ import QtQuick
 import qs.Commons
 import "model/Format.js" as Format
 import "model/Pods.js" as Pods
+import "model/PodsView.js" as PodsView
 
 // AirPods battery and listening state, read from the librepods daemon's status
 // file — the same file the AirPods bar plugin reads.
@@ -33,10 +34,10 @@ Card {
   alert: lowest
   meta: Format.joinMeta([
     status.connected
-      ? (Pods.noiseModeName(status.noiseMode) !== ""
-        ? Pods.noiseModeName(status.noiseMode) : "Connected")
+      ? (PodsView.noiseModeName(status.noiseMode) !== ""
+        ? PodsView.noiseModeName(status.noiseMode) : "Connected")
       : "Not connected",
-    Pods.lidName(status.lidState)
+    PodsView.lidName(status.lidState)
   ])
 
   Row {

@@ -42,6 +42,7 @@ Item {
 
   function text(key, fallback) { return Probe.text(values, key, fallback) }
   function path(key) { return Probe.path(values, key) }
+  function program(key) { return Probe.program(values, key) }
   function number(key, fallback) { return Probe.number(values, key, fallback) }
   function flag(key) { return Probe.flag(values, key) }
 

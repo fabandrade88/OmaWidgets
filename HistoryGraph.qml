@@ -17,6 +17,7 @@ Item {
   property real gap: Math.max(1, Style.space(1))
 
   readonly property color dimFill: Util.alpha(fill, 0.35)
+  readonly property int slots: Array.isArray(series) ? series.length : 0
 
   implicitHeight: Style.space(28)
   implicitWidth: Style.space(90)
@@ -29,13 +30,18 @@ Item {
     spacing: root.gap
 
     Repeater {
-      model: root.series
+      // The count, not the array: Series.push returns a new array every sample,
+      // and a Repeater bound to it would tear down and rebuild all forty bars
+      // each time. The count does not change, so the bars are built once.
+      model: root.slots
 
       Item {
+        readonly property real sample: index < root.series.length ? root.series[index] : -1
+
         // Every bar shares the leftover width evenly, so a narrower card keeps
         // the same number of samples instead of clipping the oldest ones.
-        width: Math.max(1, (root.width - root.gap * Math.max(0, root.series.length - 1))
-          / Math.max(1, root.series.length))
+        width: Math.max(1, (root.width - root.gap * Math.max(0, root.slots - 1))
+          / Math.max(1, root.slots))
         height: root.height
 
         Rectangle {
@@ -44,9 +50,9 @@ Item {
           // An unknown sample (-1) draws nothing at all. A known zero still draws
           // a hairline, so a genuinely idle stretch is visibly a measurement
           // rather than a gap in the record.
-          height: modelData < 0 ? 0 : Math.max(1, parent.height * Math.min(1, modelData))
+          height: parent.sample < 0 ? 0 : Math.max(1, parent.height * Math.min(1, parent.sample))
           radius: Style.cornerRadius > 0 ? width / 2 : 0
-          color: index === root.series.length - 1 ? root.fill : root.dimFill
+          color: index === root.slots - 1 ? root.fill : root.dimFill
 
           Behavior on height {
             NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
