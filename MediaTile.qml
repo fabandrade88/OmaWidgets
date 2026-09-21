@@ -2,11 +2,12 @@ import QtQuick
 import qs.Commons
 import "model/Media.js" as Media
 
-// The media tile: cover art filling the square, the track over a scrim at the
-// bottom, and the transport on hover.
+// The media tile, in two forms.
 //
-// Art is the one thing on a tile worth showing at tile size, so it takes the
-// whole square instead of sitting in a corner.
+// With cover art there is nothing better to show than the art, so it fills the
+// square and the track sits over a scrim at the bottom. Without it, the tile
+// falls back to the same ring the other tiles use — track progress around a
+// music note — so a row of tiles stays a row of tiles.
 Tile {
   id: root
 
@@ -17,11 +18,12 @@ Tile {
   readonly property bool hasMedia: !!media && media.hasMedia
   readonly property bool showArt: config.albumArt !== false && track.artUrl !== "" && hasMedia
 
-  glyph: showArt ? "" : "󰝚"
-  label: hasMedia ? "" : "NOW PLAYING"
-  value: ""
-  caption: ""
-  fraction: hasMedia ? track.progress : -1
+  // Tile's own ring-and-reading layout is used only when there is no art; with
+  // art, everything is drawn in the overlay instead.
+  glyph: showArt || !hasMedia ? "" : "󰝚"
+  value: showArt || !hasMedia ? "" : (track.title !== "" ? track.title : track.artist)
+  caption: showArt || !hasMedia || track.title === "" ? "" : track.artist
+  fraction: showArt || !hasMedia ? -1 : track.progress
   interactive: hasMedia && track.canTogglePlaying
   onActivated: if (media) media.toggle()
 
@@ -35,9 +37,6 @@ Tile {
     sourceSize.width: 320
     sourceSize.height: 320
     opacity: 0.55
-    // Clipped to the tile's own rounded corners rather than overflowing them.
-    layer.enabled: true
-    layer.effect: null
   }
 
   // Keeps the labels readable over any cover.
@@ -57,7 +56,7 @@ Tile {
     anchors.bottom: parent.bottom
     anchors.margins: Style.spacing.md
     anchors.bottomMargin: Style.spacing.lg
-    visible: root.hasMedia
+    visible: root.showArt
     spacing: 0
 
     Text {
@@ -84,8 +83,9 @@ Tile {
   }
 
   MediaControls {
-    anchors.centerIn: parent
-    anchors.verticalCenterOffset: -Style.space(6)
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: Style.spacing.sm
     visible: root.hasMedia && root.hot
     compact: true
     track: root.track

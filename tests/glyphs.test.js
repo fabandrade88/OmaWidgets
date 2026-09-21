@@ -132,6 +132,15 @@ function checkEscapes(line, where) {
 
   for (var i = 0; i < units.length; i++) {
     var unit = units[i]
+    // The same mistake as a bare BMP private-use character, written the other
+    // way round: "\\uF02CB" is an escape for U+F02C followed by the letter B.
+    // Four hex digits cannot express a supplementary-plane icon, so an escape
+    // that lands in the private-use area is always wrong.
+    if (unit >= 0xE000 && unit <= 0xF8FF) {
+      t.ok(false, where + ": escaped U+" + unit.toString(16).toUpperCase()
+        + " is a BMP private-use value — a five-digit escape truncated to four?")
+      continue
+    }
     if (unit >= 0xDC00 && unit <= 0xDFFF) {
       t.ok(false, where + ": a low surrogate escape with no high surrogate before it")
       continue

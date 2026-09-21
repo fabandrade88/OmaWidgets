@@ -6,6 +6,10 @@ import "model/Pods.js" as Pods
 // AirPods battery and listening state, read from the librepods daemon's status
 // file — the same file the AirPods bar plugin reads.
 //
+// Laid out the way Apple's own battery widget is: a ring per part with its mark
+// inside and the level underneath, so the pair and the case are read side by
+// side rather than as three stacked bars.
+//
 // Display only. The controls live in io.github.thisisgm.omapods, which owns the
 // write path to the daemon.
 Card {
@@ -14,14 +18,15 @@ Card {
   property var pods: null
   property var config: ({})
 
-  // Guarded accessors, for the moment during a hot-reload when the service is
-  // gone but the card has not been torn down yet.
   readonly property var status: pods ? pods.status : Pods.empty()
   readonly property bool hasReading: !!pods && pods.hasBattery
   readonly property bool absent: !pods || pods.absent
   readonly property bool schemaTooNew: !!pods && pods.schemaTooNew
   readonly property int lowestLevel: pods ? pods.lowestLevel : Pods.UNKNOWN
   readonly property bool lowest: lowestLevel >= 0 && lowestLevel <= 20
+
+  // AirPods Max carry no case and no second bud, so their card is one gauge.
+  readonly property bool isHeadset: status.isHeadset
 
   title: pods ? pods.title : "AirPods"
   glyph: "󰋋"
@@ -34,41 +39,44 @@ Card {
     Pods.lidName(status.lidState)
   ])
 
-  // Battery keeps arriving over BLE while the audio link is down, so a card with
-  // readings is worth drawing even when the pods are not connected.
-  Column {
+  Row {
     width: parent.width
-    spacing: Style.spacing.md
     visible: root.hasReading
+    spacing: 0
 
-    PodPill {
-      visible: !root.status.isHeadset
-      width: parent.width
-      label: "LEFT"
-      pod: root.status.left
-    }
+    // Evenly spread, so two gauges and three both sit balanced under the title.
+    property int slots: root.isHeadset ? 1 : (root.status.caseBattery.available ? 3 : 2)
 
-    PodPill {
-      visible: !root.status.isHeadset
-      width: parent.width
-      label: "RIGHT"
-      pod: root.status.right
-    }
-
-    PodPill {
-      visible: root.status.isHeadset
-      width: parent.width
-      label: "HEADPHONES"
+    PodGauge {
+      visible: root.isHeadset
+      width: parent.width / parent.slots
+      kind: "headset"
       pod: root.status.headset
+      ringSize: root.compact ? Style.space(42) : Style.space(54)
     }
 
-    PodPill {
-      // AirPods Max carry no case, so the row is absent rather than empty.
-      visible: !root.status.isHeadset && root.status.caseBattery.available
-      width: parent.width
-      label: "CASE"
+    PodGauge {
+      visible: !root.isHeadset
+      width: parent.width / parent.slots
+      kind: "left"
+      pod: root.status.left
+      ringSize: root.compact ? Style.space(42) : Style.space(54)
+    }
+
+    PodGauge {
+      visible: !root.isHeadset
+      width: parent.width / parent.slots
+      kind: "right"
+      pod: root.status.right
+      ringSize: root.compact ? Style.space(42) : Style.space(54)
+    }
+
+    PodGauge {
+      visible: !root.isHeadset && root.status.caseBattery.available
+      width: parent.width / parent.slots
+      kind: "case"
       pod: root.status.caseBattery
-      wornHint: false
+      ringSize: root.compact ? Style.space(42) : Style.space(54)
     }
   }
 

@@ -50,7 +50,7 @@ Item {
           if (tileId === Layout.TILE_CPU) return cpuTile
           if (tileId === Layout.TILE_MEMORY) return memoryTile
           if (tileId === Layout.TILE_GPU) return gpuTile
-          if (tileId === Layout.TILE_PODS) return podsTile
+          if (tileId === Layout.TILE_PODS) return podsTileComponent
           if (tileId === Layout.TILE_BATTERY) return batteryTile
           if (tileId === Layout.TILE_POWER) return powerTile
           if (tileId === Layout.TILE_MEDIA) return mediaTile
@@ -69,7 +69,7 @@ Item {
   Component {
     id: cpuTile
     MetricTile {
-      glyph: "󰱛"
+      glyph: "󰍛"
       label: Layout.tileLabel(Layout.TILE_CPU)
       value: Format.isKnown(root.system.cpuLoad) ? Format.percent(root.system.cpuLoad) : "—"
       caption: Format.celsius(root.system.cpuTemperature)
@@ -81,7 +81,7 @@ Item {
   Component {
     id: memoryTile
     MetricTile {
-      glyph: "󰍛"
+      glyph: "󰘚"
       label: Layout.tileLabel(Layout.TILE_MEMORY)
       value: Format.isKnown(root.system.memory.fraction)
         ? Format.percent(root.system.memory.fraction) : "—"
@@ -94,7 +94,7 @@ Item {
   Component {
     id: gpuTile
     MetricTile {
-      glyph: "󰽋"
+      glyph: "󰢮"
       label: Layout.tileLabel(Layout.TILE_GPU)
       // A driver with no busy counter leads with its clock, so the biggest
       // number on the tile is always something that was measured.
@@ -110,14 +110,13 @@ Item {
   }
 
   Component {
-    id: podsTile
-    MetricTile {
-      glyph: "󰋋"
-      label: Layout.tileLabel(Layout.TILE_PODS)
-      value: root.pods.lowestLevel >= 0 ? root.pods.lowestLevel + "%" : "—"
-      caption: root.pods.connected ? root.pods.noiseModeName : "not connected"
-      fraction: root.pods.lowestLevel >= 0 ? root.pods.lowestLevel / 100 : -1
-      alert: root.pods.lowestLevel >= 0 && root.pods.lowestLevel <= 20
+    id: podsTileComponent
+    PodsTile {
+      height: root.side
+      radius: root.settings.tileRadius
+      backgroundOpacity: root.settings.opacity
+      pods: root.pods
+      config: root.settings
     }
   }
 
@@ -141,6 +140,14 @@ Item {
       label: Layout.tileLabel(Layout.TILE_POWER)
       value: Power.profileLabel(root.power.activeProfile) || "—"
       caption: root.power.onBattery ? "on battery" : "on AC"
+      // The ring shows where this profile sits on the saver-to-performance
+      // scale, so the tile carries the same information the segmented control
+      // does on the full card.
+      fraction: {
+        var at = root.power.profiles.indexOf(root.power.activeProfile)
+        if (at < 0 || root.power.profiles.length < 2) return -1
+        return at / (root.power.profiles.length - 1)
+      }
       // Tapping cycles to the next profile; the full card has the three
       // buttons, but a tile has room for one gesture.
       interactive: root.power.profilesAvailable

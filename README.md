@@ -35,8 +35,12 @@ readings, two ways to look at them.
 
 Compact is a different layout, not a smaller one. The Performance card alone
 carries three unrelated readings, and shrinking it just crushes them together —
-so in compact mode each reading gets its own square instead, with the one number
-it exists to show, a label above it and a meter along the bottom edge.
+so in compact mode each reading gets its own square instead: a ring with its mark
+inside and the reading underneath, the way iOS and macOS draw a battery widget.
+
+<p align="center">
+  <img src="docs/tiles.png" alt="Compact tiles" width="300">
+</p>
 
 Tile corners are rounded from `tileRadius`, independently of the theme's own
 corner radius: a theme with square corners still wants its small tiles rounded,
@@ -89,8 +93,19 @@ one D-Bus call, not a subprocess.
 
 ### AirPods
 
+A ring per part with its mark inside and the level underneath — the left pod, the
+right pod and the case — so the pair and the case are read side by side rather
+than as three stacked bars. Charging breaks the ring at twelve o'clock. In compact
+mode the same rings pack into a two-by-two square.
+
+The marks are drawn, not set in a font: no Nerd Font glyph is an AirPod, and the
+nearest candidates say "audio" without saying which bud. Three rounded rectangles
+mirror cleanly, so the left and right marks are genuinely mirrored rather than one
+picture used twice. An AirPods Max has a single battery and no case, so it gets
+one gauge and a headphone mark.
+
 Per-pod and case battery, charging and in-ear hints, the listening mode and the
-case lid, read from the status file the
+case lid, all read from the status file the
 [librepods](https://github.com/kavishdevar/librepods) daemon publishes at
 `$XDG_STATE_HOME/librepods/status.json` — the same file the
 [AirPods plugin](https://github.com/thisisgm/omarchy-pods) reads.
@@ -203,7 +218,7 @@ typo costs you one setting rather than the widget.
 | `desktop` | `true` | Draw the cards on the desktop |
 | `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right`. Margins are measured from the usable area, so the cards clear the bar whichever edge it is on |
 | `cards` | all five | Any of `system`, `media`, `pods`, `battery`, `power`, in the order you want them |
-| `columns` | `1`, or `2` in compact | 1–6 on the desktop. The overlay always spreads them across one row |
+| `columns` | `1`, or `2` in compact | 1–6 on the desktop. Cards are packed shortest-first, so a short card never leaves a hole under it. The overlay always spreads them across one row |
 | `cardWidth` | `268` | 180–520 pixels |
 | `spacing` | `10` | 0–48 pixels between cards |
 | `marginX` / `marginY` | `28` / `20` | Distance from the screen edges |
@@ -339,10 +354,12 @@ HardwareProbe.qml    runs scripts/omawidgets-probe once per session
 
 DesktopSurface.qml   layer-shell windows on WlrLayer.Bottom, one per screen
 OverlaySurface.qml   the dimmed full-screen surface
-CardStack.qml        picks the layout; CardColumn.qml and TileGrid.qml are the two
+CardStack.qml        picks the layout; CardColumn.qml packs cards shortest-first,
+                     TileGrid.qml lays out the compact squares
 
 SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
-Card.qml  Tile.qml  MediaTile.qml  MediaControls.qml
+Card.qml  Tile.qml  MediaTile.qml  PodsTile.qml  MediaControls.qml
+IconRing.qml  PodGauge.qml  PodMark.qml
 MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
 PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml
 
