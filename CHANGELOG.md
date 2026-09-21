@@ -4,6 +4,29 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.2] — 2026-09-21
+
+### Changed
+
+- **The source is organised into folders.** Fifty-odd QML files sat together in
+  the repository root; they are now grouped by the job they do — `services/`
+  reads the machine, `surfaces/` places the cards, `cards/`, `tiles/` and
+  `settings/` draw them, and `ui/` holds the drawing shared by more than one of
+  those. The three entry points named in the manifest stay in the root, where
+  the manifest points at them. Components are reached with directory imports, so
+  every file states which layers it depends on.
+- `PodPill.qml` is gone. Nothing used it.
+- **The README is a README again** — what it is, how to install it, what it
+  needs, what it does, and screenshots, in about a hundred lines. The long-form
+  material moved, unchanged, into `docs/CARDS.md`, `docs/SETTINGS.md`,
+  `docs/SECURITY.md` and `docs/DEVELOPMENT.md`.
+
+### Fixed
+
+- The hardware probe's path is resolved relative to the plugin root rather than
+  to the file asking for it, so moving `HardwareProbe.qml` into `services/` does
+  not cost the Performance card its CPU model, temperature and GPU readings.
+
 ## [1.7.1] — 2026-09-21
 
 ### Fixed

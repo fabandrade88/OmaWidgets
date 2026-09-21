@@ -1,4 +1,6 @@
 import QtQuick
+import "services"
+import "surfaces"
 import "model/Arrange.js" as Arrange
 import "model/Settings.js" as Settings
 

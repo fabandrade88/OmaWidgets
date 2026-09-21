@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "settings"
 import "model/Arrange.js" as Arrange
 import "model/Layout.js" as Layout
 import "model/Settings.js" as Settings

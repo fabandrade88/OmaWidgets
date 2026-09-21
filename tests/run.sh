@@ -43,7 +43,8 @@ if [[ -x $QMLLINT ]]; then
   # Color.popups), cannot resolve `root` or `modelData` from inside a Component or
   # a Repeater delegate, and does not know Quickshell registers PanelWindow — all
   # of which the first-party Omarchy plugins trip too.
-  if "$QMLLINT" -I "$root" -I /usr/lib/qt6/qml ./*.qml 2>&1 |
+  if find . -name '*.qml' -not -path './.git/*' -print0 |
+    xargs -0 "$QMLLINT" -I "$root" -I /usr/lib/qt6/qml 2>&1 |
     grep -E '\[(property-override|unused-imports|deprecated|incompatible-type|duplicate-property-binding|read-only-property|missing-type|non-list-property|var-used-before-declaration|invalid-lint-directive)\]$'; then
     echo "FAIL qml — see above"
     status=1

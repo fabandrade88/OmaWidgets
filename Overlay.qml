@@ -1,4 +1,5 @@
 import QtQuick
+import "surfaces"
 
 // Overlay entry point. The shell loads this when the plugin is summoned and
 // hands it the plugin's own service instance, so the overlay renders the same
