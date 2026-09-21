@@ -33,10 +33,16 @@ readings, two ways to look at them.
 
 ## Compact mode
 
-Compact is a different layout, not a smaller one. The Performance card alone
-carries three unrelated readings, and shrinking it just crushes them together —
-so in compact mode each reading gets its own square instead: a ring with its mark
-inside and the reading underneath, the way iOS and macOS draw a battery widget.
+Compact is a different layout, not a smaller one. Each widget becomes a rounded
+square: a ring with its mark inside and the reading underneath, the way iOS and
+macOS draw a battery widget.
+
+Performance keeps its three readings together in one wide tile — CPU, memory and
+GPU are the three halves of "what is this machine doing", and reading them as
+three squares scattered through a grid is worse than reading them side by side.
+The AirPods tile packs its rings into a two-by-two. The media tile puts the cover
+where the others put their ring, with the track underneath and progress along the
+bottom of the art.
 
 <p align="center">
   <img src="docs/tiles.png" alt="Compact tiles" width="300">
@@ -175,17 +181,44 @@ The popup holds everything: the desktop toggle, compact mode, per-core bars, a
 3×3 picker for where the cards sit, which cards to show, and the power profile.
 Changes are written to `~/.config/omarchy/shell.json` as you make them.
 
+## Arranging the desktop
+
+Click a widget on the desktop to select it — it takes an accent border. Click it
+again to let go. Then:
+
+- **Drag it** anywhere in the stack to reorder. The others reflow around it as
+  you go, and the new order is written to `shell.json` when you drop.
+- **Hide it** with a keybind, which removes it from the list. It comes back from
+  the bar popup's card toggles, where the full list lives.
+
+Selecting first also means a click does not fire the widget underneath it: the
+first tap on the media tile selects, the second plays or pauses. The transport
+buttons and the profile segments work on the first click either way.
+
+Everything here is scriptable, so the desktop can be arranged from the keyboard
+as well as with a pointer.
+
 ### Keybindings
 
-Add to `~/.config/hypr/bindings.conf`:
+Add to `~/.config/hypr/bindings.lua`:
 
-```bash
-# Summon the overlay
-bindd = SUPER, W, Widgets overlay, exec, omarchy-shell omawidgets toggle
-
-# Show or hide the desktop cards without opening anything
-bindd = SUPER SHIFT, W, Toggle desktop widgets, exec, omarchy-shell omawidgets-bar toggleDesktop
+```lua
+o.bind("SUPER + ALT + W",         "Hide widget",     "omarchy-shell omawidgets hideSelected")
+o.bind("SUPER + ALT + TAB",       "Next widget",     "omarchy-shell omawidgets selectNext")
+o.bind("SUPER + ALT + RIGHT",     "Move widget on",  "omarchy-shell omawidgets moveSelectedForward")
+o.bind("SUPER + ALT + LEFT",      "Move widget back","omarchy-shell omawidgets moveSelectedBack")
+o.bind("SUPER + ALT + O",         "Widgets overlay", "omarchy-shell omawidgets toggle")
+o.bind("SUPER + SHIFT + ALT + W", "Toggle widgets",  "omarchy-shell omawidgets-bar toggleDesktop")
 ```
+
+> **`SUPER + W` is Omarchy's Close window.** It is bound in
+> `default/hypr/bindings/tiling.lua`, so this plugin does not take it. If you
+> want it anyway, unbind it first — and pick something else for closing windows:
+>
+> ```lua
+> hl.unbind("SUPER + W")
+> o.bind("SUPER + W", "Hide widget", "omarchy-shell omawidgets hideSelected")
+> ```
 
 ### IPC
 
@@ -201,6 +234,14 @@ omarchy-shell omawidgets nowPlaying          # "playing<TAB>title<TAB>artist"
 omarchy-shell omawidgets playPause           # transport, for media keys or a keybind
 omarchy-shell omawidgets nextTrack
 omarchy-shell omawidgets previousTrack
+
+omarchy-shell omawidgets selected             # which widget is selected, if any
+omarchy-shell omawidgets select pods          # select one by name
+omarchy-shell omawidgets selectNext           # walk the selection; selectPrevious too
+omarchy-shell omawidgets deselect
+omarchy-shell omawidgets hideSelected         # prints what it hid, or "nothing selected"
+omarchy-shell omawidgets moveSelectedForward  # reorder from the keyboard
+omarchy-shell omawidgets moveSelectedBack
 ```
 
 `position` takes any of the eight names in the table below. An unknown one
@@ -218,7 +259,8 @@ typo costs you one setting rather than the widget.
 | `desktop` | `true` | Draw the cards on the desktop |
 | `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right`. Margins are measured from the usable area, so the cards clear the bar whichever edge it is on |
 | `cards` | all five | Any of `system`, `media`, `pods`, `battery`, `power`, in the order you want them |
-| `columns` | `1`, or `2` in compact | 1–6 on the desktop. Cards are packed shortest-first, so a short card never leaves a hole under it. The overlay always spreads them across one row |
+| `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay always spreads them across one row |
+| `cards` order | — | Also the order on the desktop. Dragging a widget rewrites it |
 | `cardWidth` | `268` | 180–520 pixels |
 | `spacing` | `10` | 0–48 pixels between cards |
 | `marginX` / `marginY` | `28` / `20` | Distance from the screen edges |
@@ -354,18 +396,22 @@ HardwareProbe.qml    runs scripts/omawidgets-probe once per session
 
 DesktopSurface.qml   layer-shell windows on WlrLayer.Bottom, one per screen
 OverlaySurface.qml   the dimmed full-screen surface
-CardStack.qml        picks the layout; CardColumn.qml packs cards shortest-first,
-                     TileGrid.qml lays out the compact squares
+CardStack.qml        picks the layout
+PackedLayout.qml     places, selects and drags; CardColumn.qml and TileGrid.qml
+                     are the two sets of delegates it hosts
+Arranger.qml         the selection, and what hiding or dragging asks for
 
 SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
-Card.qml  Tile.qml  MediaTile.qml  PodsTile.qml  MediaControls.qml
-IconRing.qml  PodGauge.qml  PodMark.qml
+Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml
+IconRing.qml  MetricGauge.qml  PodGauge.qml  PodMark.qml  MediaControls.qml
 MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
 PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml
 
 model/Sysfs.js       /proc and hwmon parsers
 model/Media.js       MPRIS player selection and track presentation
-model/Layout.js      which cards are worth drawing, and what they become as tiles
+model/Layout.js      which widgets are worth drawing, and how wide each tile is
+model/Pack.js        column packing, including two-column items
+model/Arrange.js     selecting, hiding and reordering
 model/Gpu.js         one shape from three driver families
 model/Pods.js        the librepods status file, defensively
 model/Power.js       battery presentation, and the profile allowlist

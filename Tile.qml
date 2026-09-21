@@ -17,6 +17,7 @@ BorderSurface {
   property string caption: ""
   property real fraction: -1
   property bool alert: false
+  property bool selected: false
   property bool interactive: false
   property real backgroundOpacity: 0.92
 
@@ -31,10 +32,19 @@ BorderSurface {
 
   default property alias overlay: overlayHolder.children
 
+  // Drawn where the ring goes, for a tile whose reading is a picture rather
+  // than a number — the album cover.
+  property Component artwork: null
+
   signal activated()
 
   color: Util.alpha(Color.popups.background, backgroundOpacity)
-  borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(1)))
+  // Selection is drawn as a flat accent border rather than the theme's own
+  // selected-control tokens: some themes give those zero width, and a selection
+  // you cannot see is worse than one that does not match the palette exactly.
+  borderSpec: selected
+    ? Border.flat(Color.accent, Math.max(2, Style.space(2)))
+    : Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(1)))
   // A square, so one number sizes it and the grid stays even.
   implicitWidth: height
   opacity: root.hot ? 1 : 0.97
@@ -48,22 +58,34 @@ BorderSurface {
     spacing: Style.spacing.xs
     visible: root.glyph !== "" || root.value !== ""
 
-    IconRing {
-      id: ring
+    Item {
+      id: mark
       anchors.horizontalCenter: parent.horizontalCenter
       // Leaves room for the reading underneath without crowding it.
       width: Math.min(parent.width * 0.62, root.height * 0.46)
       height: width
-      value: root.fraction
-      fill: root.accent
+      visible: root.artwork !== null || root.glyph !== "" || root.fraction >= 0
 
-      Text {
-        anchors.centerIn: parent
-        textFormat: Text.PlainText
-        text: root.glyph
-        color: root.foreground
-        font.family: root.fontFamily
-        font.pixelSize: parent.height * 0.52
+      IconRing {
+        anchors.fill: parent
+        visible: root.artwork === null
+        value: root.fraction
+        fill: root.accent
+
+        Text {
+          anchors.centerIn: parent
+          textFormat: Text.PlainText
+          text: root.glyph
+          color: root.foreground
+          font.family: root.fontFamily
+          font.pixelSize: parent.height * 0.52
+        }
+      }
+
+      Loader {
+        anchors.fill: parent
+        active: root.artwork !== null
+        sourceComponent: root.artwork
       }
     }
 

@@ -102,6 +102,15 @@ Panel {
   onServiceChanged: pushSettings()
   Component.onCompleted: pushSettings()
 
+  // Selecting, hiding and dragging happen on the desktop surface, which the
+  // service owns; persisting the result happens here, because this widget is the
+  // only thing that writes shell.json.
+  Connections {
+    target: root.service ? root.service.arranger : null
+    ignoreUnknownSignals: true
+    function onCardsChangeRequested(cards) { root.write({ cards: cards }) }
+  }
+
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 

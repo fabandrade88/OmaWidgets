@@ -5,6 +5,8 @@ var t = require("./harness.js")
 var Layout = require("../model/Layout.js")
 var Media = require("../model/Media.js")
 var Settings = require("../model/Settings.js")
+var Pack = require("../model/Pack.js")
+var Arrange = require("../model/Arrange.js")
 
 var defaults = Settings.normalize({})
 
@@ -23,16 +25,13 @@ t.deep(Layout.visibleCards(Settings.normalize({ cards: ["media"] }), { hasMedia:
 
 // ---------------------------------------------------------------------- tiles
 
-// Compact mode is a different layout, not a smaller one. The Performance card
-// carries three unrelated readings and becomes three tiles.
-t.deep(Layout.visibleTiles(defaults, { hasPods: true, hasMedia: true }),
-  ["cpu", "memory", "gpu", "media", "pods", "battery", "power"],
-  "the performance card becomes three tiles, in card order")
-t.deep(Layout.visibleTiles(defaults, { hasPods: false, hasMedia: false }),
-  ["cpu", "memory", "gpu", "battery", "power"], "a dropped card takes its tiles with it")
-t.deep(Layout.visibleTiles(Settings.normalize({ cards: ["power", "system"] }), {}),
-  ["power", "cpu", "memory", "gpu"], "tiles follow the user's card order")
-t.eq(Layout.tileLabel("cpu"), "CPU", "a tile has a label")
+// Compact draws one tile per card, not one per reading: the Performance tile is
+// a wide rectangle holding CPU, memory and GPU together. Keeping tiles and cards
+// one to one is also what lets one drag reorder both layouts.
+t.eq(Layout.tileSpan("system"), 2, "the performance tile spans two columns")
+t.eq(Layout.tileSpan("battery"), 1, "everything else is one")
+t.eq(Layout.tileSpan("nonsense"), 1, "an unknown tile is one")
+t.eq(Layout.tileLabel("system"), "PERFORMANCE", "a tile has a label")
 t.eq(Layout.tileLabel("nonsense"), "", "an unknown tile has none")
 t.eq(Settings.normalize({ compact: true }).columns, 2,
   "compact defaults to two columns, because one column of small squares wastes the space")
@@ -124,5 +123,78 @@ t.eq(Media.artUrl("javascript:alert(1)"), "", "a javascript URI is refused")
 t.eq(Media.artUrl(""), "", "no art, no URL")
 t.eq(Media.isRemoteArt("https://i.scdn.co/image/abc"), true, "remote art is identifiable")
 t.eq(Media.isRemoteArt("file:///tmp/cover.png"), false, "local art is not remote")
+
+// ----------------------------------------------------------------- packing
+
+// A Grid's rows are as tall as their tallest cell, which is what left a hole
+// under a short card. Packing places each item in whichever column is shortest.
+var packed = Pack.pack([{ span: 1, height: 300 }, { span: 1, height: 120 },
+  { span: 1, height: 140 }, { span: 1, height: 100 }], 2, 268, 10)
+t.deep(packed.boxes.map(function (b) { return b.x }), [0, 278, 278, 278],
+  "three short cards stack in the second column rather than waiting for the tall one")
+t.deep(packed.boxes.map(function (b) { return b.y }), [0, 0, 130, 280],
+  "and each starts where the one above it ended")
+t.eq(packed.height, 380, "the layout is as tall as its tallest column")
+t.eq(packed.width, 546, "and as wide as its columns plus the gap between them")
+
+var spanned = Pack.pack([{ span: 2, height: 132 }, { span: 1, height: 132 },
+  { span: 1, height: 132 }], 2, 132, 10)
+t.eq(spanned.boxes[0].width, 274, "a two-column item is as wide as both columns and the gap")
+t.deep(spanned.boxes.map(function (b) { return b.y }), [0, 142, 142],
+  "and the items after it start below, on both columns")
+t.eq(Pack.pack([{ span: 2, height: 100 }], 1, 132, 10).boxes[0].width, 132,
+  "a two-column item in a one-column layout is simply one wide")
+t.eq(Pack.pack([], 2, 132, 10).height, 0, "nothing to pack is no height")
+t.eq(Pack.clampColumns(99), 6, "columns are bounded")
+t.eq(Pack.clampColumns("x"), 1, "an unparseable column count is one")
+
+t.eq(Pack.boxAt(packed.boxes, 10, 10), 0, "a point finds the box it is in")
+t.eq(Pack.boxAt(packed.boxes, 300, 200), 2, "including one further down a column")
+t.eq(Pack.boxAt(packed.boxes, 9999, 9999), -1, "and outside everything finds nothing")
+t.deep(Pack.move(["a", "b", "c"], 0, 2), ["b", "c", "a"], "an item moves to a new position")
+t.deep(Pack.move(["a", "b", "c"], 2, 0), ["c", "a", "b"], "in either direction")
+t.deep(Pack.move(["a", "b", "c"], 1, 1), ["a", "b", "c"], "moving onto itself changes nothing")
+t.deep(Pack.move(["a", "b", "c"], 9, 0), ["a", "b", "c"], "an index that is not there changes nothing")
+
+// --------------------------------------------------------------- arranging
+
+t.eq(Arrange.toggleSelection("", "power"), "power", "tapping an unselected widget selects it")
+t.eq(Arrange.toggleSelection("power", "power"), "",
+  "tapping it again lets go, which is the only way to deselect without a keyboard")
+t.eq(Arrange.toggleSelection("power", "media"), "media", "tapping another moves the selection")
+t.eq(Arrange.toggleSelection("power", ""), "", "selecting nothing selects nothing")
+
+t.deep(Arrange.without(["system", "media", "power"], "media"), ["system", "power"],
+  "hiding drops the widget from the list")
+t.deep(Arrange.without(["system"], "absent"), ["system"], "hiding one that is not there changes nothing")
+
+// A drag only ever sees what is on screen, and a card can be enabled but hidden
+// — nothing playing hides the media card. Dropping those would mean rearranging
+// the desktop silently deleted a card the user had turned on.
+t.deep(Arrange.reorder(["system", "media", "pods"], ["pods", "system"]),
+  ["pods", "system", "media"], "a drag reorders what it saw and keeps the rest")
+t.deep(Arrange.reorder(["system", "media"], ["media", "system", "ghost"]),
+  ["media", "system"], "an id that is not in the list is ignored")
+t.deep(Arrange.reorder(["system", "media"], ["media", "media"]), ["media", "system"],
+  "a repeated id appears once")
+t.deep(Arrange.reorder(["system", "media"], []), ["system", "media"],
+  "a drag that asked for nothing changes nothing")
+
+t.eq(Arrange.nextSelection(["a", "b", "c"], "", 1), "a", "stepping from nothing selects the first")
+t.eq(Arrange.nextSelection(["a", "b", "c"], "", -1), "c", "and backwards selects the last")
+t.eq(Arrange.nextSelection(["a", "b", "c"], "b", 1), "c", "stepping forward moves along")
+t.eq(Arrange.nextSelection(["a", "b", "c"], "c", 1), "a", "and wraps at the end")
+t.eq(Arrange.nextSelection(["a", "b", "c"], "a", -1), "c", "as it does at the start")
+t.eq(Arrange.nextSelection([], "a", 1), "", "with nothing on screen there is nothing to select")
+t.eq(Arrange.nextSelection(["a", "b"], "gone", 1), "a",
+  "a selection that is no longer shown starts again from the first")
+
+t.deep(Arrange.moveBy(["a", "b", "c"], "c", -1), ["a", "c", "b"], "a widget moves back one place")
+t.deep(Arrange.moveBy(["a", "b", "c"], "a", 1), ["b", "a", "c"], "and forward one place")
+// Clamped rather than wrapping: a widget nudged past the end should stop there,
+// not reappear at the other side of the desktop.
+t.deep(Arrange.moveBy(["a", "b", "c"], "c", 1), ["a", "b", "c"], "moving past the end stops there")
+t.deep(Arrange.moveBy(["a", "b", "c"], "a", -1), ["a", "b", "c"], "as does moving past the start")
+t.deep(Arrange.moveBy(["a", "b"], "gone", 1), ["a", "b"], "moving one that is not there changes nothing")
 
 process.exit(t.report("layout"))

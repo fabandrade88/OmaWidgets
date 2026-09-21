@@ -4,6 +4,42 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.3.0] — 2026-09-21
+
+### Added
+
+- **Arranging the desktop.** Click a widget to select it, drag it to reorder, and
+  hide it with a keybind. The others reflow around a dragged widget as it moves,
+  and the new order is written to `shell.json` on drop. All of it is scriptable —
+  `select`, `selectNext`, `moveSelectedForward`, `hideSelected` and the rest — so
+  the desktop can be arranged from the keyboard as well as with a pointer.
+  Selecting first also means a click no longer fires the widget underneath it: the
+  first tap on the media tile selects, the second plays or pauses.
+- A hidden widget comes back from the bar popup's card toggles.
+
+### Changed
+
+- **CPU, memory and GPU share one wide compact tile** instead of taking three
+  squares. They are the three halves of "what is this machine doing", and reading
+  them side by side beats hunting for them in a grid. The packer gained support
+  for items that span more than one column to make room for it.
+- **Compact tiles are one per widget rather than one per reading**, which is also
+  what lets a single drag reorder both layouts.
+- **Album art in compact is a small square** where the other tiles put their ring,
+  with the track underneath and progress along the bottom of the cover. Art filled
+  the whole tile before, which put the title on top of whatever the cover happened
+  to be and stopped the tile matching the row it was in. The cover is masked to
+  its corner radius, because `clip` follows the bounding box and not the radius.
+- Packing, selecting, hiding and reordering are now shared by both layouts through
+  one `PackedLayout`, rather than each layout arranging itself.
+
+### Note
+
+`SUPER + W` is Omarchy's **Close window**, bound in
+`default/hypr/bindings/tiling.lua`. This plugin does not take it; the README
+suggests `SUPER + ALT + W` for hiding a widget and shows how to rebind if you
+want `SUPER + W` anyway.
+
 ## [1.2.0] — 2026-09-21
 
 ### Changed

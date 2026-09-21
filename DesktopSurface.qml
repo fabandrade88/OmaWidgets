@@ -25,8 +25,11 @@ Item {
   required property var media
   property var config: Settings.DEFAULTS
   property bool showCards: true
+  property string selectedId: ""
 
   signal profileRequested(string profile)
+  signal selectRequested(string id)
+  signal orderRequested(var ids)
 
   readonly property var placement: Layout.anchorsFor(config.position)
 
@@ -100,7 +103,11 @@ Item {
         power: root.power
         media: root.media
         config: root.config
+        arrangeable: true
+        selectedId: root.selectedId
         onProfileRequested: function (profile) { root.profileRequested(profile) }
+        onSelectRequested: function (id) { root.selectRequested(id) }
+        onOrderRequested: function (ids) { root.orderRequested(ids) }
       }
     }
   }

@@ -16,6 +16,7 @@ BorderSurface {
   property string meta: ""
   property bool compact: false
   property bool alert: false
+  property bool selected: false
   property real backgroundOpacity: 0.92
 
   readonly property color foreground: Color.popups.text
@@ -27,7 +28,12 @@ BorderSurface {
 
   color: Util.alpha(Color.popups.background, backgroundOpacity)
   radius: Style.cornerRadius
-  borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(1)))
+  // Selection is drawn as a flat accent border rather than the theme's own
+  // selected-control tokens: some themes give those zero width, and a selection
+  // you cannot see is worse than one that does not match the palette exactly.
+  borderSpec: selected
+    ? Border.flat(Color.accent, Math.max(2, Style.space(2)))
+    : Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(1)))
   padding: compact ? Style.spacing.popupPadding : Style.spacing.panelPadding
 
   implicitHeight: contentTopInset + header.implicitHeight + gap + contentColumn.implicitHeight

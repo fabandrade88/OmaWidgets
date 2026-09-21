@@ -16,8 +16,12 @@ Item {
   required property var power
   required property var media
   property var config: Settings.DEFAULTS
+  property bool arrangeable: false
+  property string selectedId: ""
 
   signal profileRequested(string profile)
+  signal selectRequested(string id)
+  signal orderRequested(var ids)
 
   // Normalised on the way in, so a caller that is still being constructed (or a
   // hand-edited shell.json) yields the defaults rather than a broken binding.
@@ -46,7 +50,10 @@ Item {
       system: root.system; gpuService: root.gpuService; pods: root.pods
       power: root.power; media: root.media
       settings: root.settings; presence: root.presence
+      arrangeable: root.arrangeable; selectedId: root.selectedId
       onProfileRequested: function (profile) { root.profileRequested(profile) }
+      onSelectRequested: function (id) { root.selectRequested(id) }
+      onOrderRequested: function (ids) { root.orderRequested(ids) }
     }
   }
 
@@ -56,7 +63,10 @@ Item {
       system: root.system; gpuService: root.gpuService; pods: root.pods
       power: root.power; media: root.media
       settings: root.settings; presence: root.presence
+      arrangeable: root.arrangeable; selectedId: root.selectedId
       onProfileRequested: function (profile) { root.profileRequested(profile) }
+      onSelectRequested: function (id) { root.selectRequested(id) }
+      onOrderRequested: function (ids) { root.orderRequested(ids) }
     }
   }
 }

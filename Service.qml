@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import "model/Settings.js" as Settings
 
 // The plugin's single long-lived instance: it owns every sampler, holds the
@@ -62,6 +61,8 @@ Item {
   readonly property alias power: powerService
   readonly property alias media: mediaService
 
+  readonly property alias arranger: arranger
+
   function setProfile(profile) {
     return powerService.setProfile(profile)
   }
@@ -117,10 +118,20 @@ Item {
     probe: hardwareProbe
   }
 
+  Arranger {
+    id: arranger
+    config: root.config
+    presence: ({ hasPods: podsService.hasBattery, hasMedia: mediaService.hasMedia })
+  }
+
   MediaService {
     id: mediaService
     active: root.sampling
     preferredPlayer: root.config.preferredPlayer
+  }
+
+  ServiceIpc {
+    service: root
   }
 
   DesktopSurface {
@@ -132,33 +143,10 @@ Item {
     media: mediaService
     config: root.config
     showCards: root.config.desktop
+    selectedId: arranger.selectedCard
     onProfileRequested: function (profile) { root.setProfile(profile) }
-  }
-
-  IpcHandler {
-    target: "omawidgets"
-
-    // Summons the overlay. `omarchy-shell shell toggle <plugin-id> '{}'` does the
-    // same thing; this target exists so a Hyprland keybind can read plainly.
-    function toggle(): string { return root.toggleOverlay() ? "ok" : "unavailable" }
-    function show(): string { return root.shell && root.shell.summon(root.pluginId, "{}") ? "ok" : "unavailable" }
-    function hide(): string { return root.hideOverlay() ? "ok" : "unavailable" }
-    function refresh(): string { root.refresh(); return "ok" }
-
-    // What the media card is showing, for a status line or a script.
-    function nowPlaying(): string {
-      if (!root.media.hasMedia) return root.media.anyPlayerRunning ? "no track" : "no player"
-      var track = root.media.track
-      return (track.isPlaying ? "playing" : "paused") + "\t" + track.title + "\t" + track.artist
-    }
-
-    function playPause(): string { root.media.toggle(); return "ok" }
-    function nextTrack(): string { root.media.next(); return "ok" }
-    function previousTrack(): string { root.media.previous(); return "ok" }
-
-    // Reads the current profile, and sets it only through the allowlisted path.
-    function profile(): string { return root.power.activeProfile }
-    function setProfile(name: string): string { return root.setProfile(name) ? "ok" : "rejected" }
+    onSelectRequested: function (id) { arranger.select(id) }
+    onOrderRequested: function (ids) { arranger.applyOrder(ids) }
   }
 
   // The probe finishes after the services are built, so the first samples are

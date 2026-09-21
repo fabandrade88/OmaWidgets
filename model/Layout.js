@@ -10,32 +10,19 @@ var CARD_BATTERY = "battery"
 var CARD_POWER = "power"
 var CARD_MEDIA = "media"
 
-var TILE_CPU = "cpu"
-var TILE_MEMORY = "memory"
-var TILE_GPU = "gpu"
-var TILE_PODS = "pods"
-var TILE_BATTERY = "battery"
-var TILE_POWER = "power"
-var TILE_MEDIA = "media"
+// Compact draws one tile per card, not one per reading: the Performance tile is
+// a wide rectangle holding CPU, memory and GPU together, rather than three
+// separate squares. Keeping tiles and cards one to one is also what lets the
+// same drag reorder both layouts.
+var TILE_SPANS = {}
+TILE_SPANS[CARD_SYSTEM] = 2
 
-// Compact mode is not the same card with less padding: the Performance card
-// carries three unrelated readings, and at tile size each one deserves its own
-// square rather than being crushed together.
-var CARD_TILES = {}
-CARD_TILES[CARD_SYSTEM] = [TILE_CPU, TILE_MEMORY, TILE_GPU]
-CARD_TILES[CARD_PODS] = [TILE_PODS]
-CARD_TILES[CARD_BATTERY] = [TILE_BATTERY]
-CARD_TILES[CARD_POWER] = [TILE_POWER]
-CARD_TILES[CARD_MEDIA] = [TILE_MEDIA]
-
-var TILE_LABELS = {}
-TILE_LABELS[TILE_CPU] = "CPU"
-TILE_LABELS[TILE_MEMORY] = "RAM"
-TILE_LABELS[TILE_GPU] = "GPU"
-TILE_LABELS[TILE_PODS] = "PODS"
-TILE_LABELS[TILE_BATTERY] = "BATTERY"
-TILE_LABELS[TILE_POWER] = "POWER"
-TILE_LABELS[TILE_MEDIA] = "NOW PLAYING"
+var LABELS = {}
+LABELS[CARD_SYSTEM] = "PERFORMANCE"
+LABELS[CARD_MEDIA] = "NOW PLAYING"
+LABELS[CARD_PODS] = "AIRPODS"
+LABELS[CARD_BATTERY] = "BATTERY"
+LABELS[CARD_POWER] = "POWER"
 
 var POSITIONS = [
   "top-left", "top-center", "top-right",
@@ -66,19 +53,14 @@ function visibleCards(settings, state) {
   return out
 }
 
-// The same list, expanded into tiles and in the same order.
-function visibleTiles(settings, state) {
-  var cards = visibleCards(settings, state)
-  var out = []
-  for (var i = 0; i < cards.length; i++) {
-    var tiles = CARD_TILES[cards[i]] || []
-    for (var t = 0; t < tiles.length; t++) out.push(tiles[t])
-  }
-  return out
+// How many columns a tile occupies. Everything is one column wide except the
+// Performance tile, which carries three readings and needs the room.
+function tileSpan(id) {
+  return TILE_SPANS[String(id || "")] || 1
 }
 
 function tileLabel(id) {
-  return TILE_LABELS[String(id || "")] || ""
+  return LABELS[String(id || "")] || ""
 }
 
 // Which screen edges the desktop window anchors to. Anchoring to one edge only
@@ -100,14 +82,11 @@ if (typeof module !== "undefined") {
   module.exports = {
     CARD_SYSTEM: CARD_SYSTEM, CARD_PODS: CARD_PODS, CARD_BATTERY: CARD_BATTERY,
     CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA,
-    TILE_CPU: TILE_CPU, TILE_MEMORY: TILE_MEMORY, TILE_GPU: TILE_GPU,
-    TILE_PODS: TILE_PODS, TILE_BATTERY: TILE_BATTERY, TILE_POWER: TILE_POWER,
-    TILE_MEDIA: TILE_MEDIA,
-    CARD_TILES: CARD_TILES,
+    TILE_SPANS: TILE_SPANS,
     POSITIONS: POSITIONS,
     defaultState: defaultState,
     visibleCards: visibleCards,
-    visibleTiles: visibleTiles,
+    tileSpan: tileSpan,
     tileLabel: tileLabel,
     anchorsFor: anchorsFor
   }
