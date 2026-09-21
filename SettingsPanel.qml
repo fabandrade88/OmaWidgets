@@ -26,6 +26,7 @@ Column {
   signal columnsChanged(int columns)
   signal tileSizeChanged(int size)
   signal settingChanged(string key, int value)
+  signal textSettingChanged(string key, string value)
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -111,6 +112,7 @@ Column {
       width: parent.width
       config: root.config
       onTimingChanged: function (key, value) { root.settingChanged(key, value) }
+      onFormatPicked: function (key, value) { root.textSettingChanged(key, value) }
     }
   }
 

@@ -1,4 +1,5 @@
 import QtQuick
+import "model/Arrange.js" as Arrange
 import "model/Settings.js" as Settings
 
 // The plugin's single long-lived instance: it owns every sampler, holds the
@@ -34,7 +35,7 @@ Item {
 
   readonly property var config: Settings.normalize(pushedSettings !== null
     ? pushedSettings
-    : (shell ? Settings.fromBarConfig(shell.barConfig, pluginId) : ({})))
+    : (shell ? Arrange.fromBarConfig(shell.barConfig, pluginId) : ({})))
 
   // Called by the bar widget whenever its injected settings change. Idempotent,
   // because one bar widget instance exists per monitor and each one pushes.

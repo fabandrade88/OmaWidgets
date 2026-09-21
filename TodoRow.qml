@@ -1,6 +1,7 @@
 import QtQuick
 import qs.Commons
 import qs.Ui
+import "model/DateTime.js" as DateTime
 import "model/Format.js" as Format
 import "model/TodoList.js" as TodoList
 
@@ -11,6 +12,7 @@ Item {
   property var todo: null
   property int now: 0
   property bool archivable: true
+  property var config: ({})
 
   signal toggled()
   signal archiveToggled()
@@ -20,19 +22,10 @@ Item {
   readonly property bool done: !!todo && todo.done === true
   readonly property bool archived: !!todo && todo.archived === true
 
-  // The deadline, said the way a person would: a time today, a weekday this
-  // week, a date beyond that.
-  readonly property string deadlineLabel: {
-    if (!todo || !(todo.deadline > 0)) return ""
-    var when = new Date(todo.deadline)
-    var today = new Date(now > 0 ? now : Date.now())
-    var sameDay = when.toDateString() === today.toDateString()
-    var time = Qt.formatDateTime(when, "HH:mm")
-    if (sameDay) return time
-    var days = Math.round((when - today) / 86400000)
-    if (days > 0 && days < 7) return Qt.formatDateTime(when, "ddd") + " " + time
-    return Qt.formatDateTime(when, "d MMM") + " " + time
-  }
+  // A time today, a weekday this week, a date beyond that — in whichever date
+  // and clock format the user chose.
+  readonly property string deadlineLabel: DateTime.deadlineLabel(
+    todo ? todo.deadline : 0, now, config.dateFormat, config.timeFormat)
 
   width: parent ? parent.width : implicitWidth
   implicitHeight: Math.max(box.height, label.implicitHeight)

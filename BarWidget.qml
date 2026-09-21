@@ -185,6 +185,11 @@ Panel {
             change[key] = value
             root.write(change)
           }
+          onTextSettingChanged: function (key, value) {
+            var change = ({})
+            change[key] = value
+            root.write(change)
+          }
         }
       }
     }

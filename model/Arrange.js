@@ -84,6 +84,25 @@ function applySelection(current, selected, canonical) {
   return out
 }
 
+// The service entry point is handed no settings of its own, so it finds its bar
+// layout entry and reads the inline values from there. This is the same object
+// the bar widget receives, which keeps one source of truth for both surfaces.
+function fromBarConfig(barConfig, pluginId) {
+  var id = String(pluginId || "")
+  var layout = barConfig && typeof barConfig === "object" && barConfig.layout
+    && typeof barConfig.layout === "object" ? barConfig.layout : {}
+  var sections = ["left", "center", "right"]
+  for (var s = 0; s < sections.length; s++) {
+    var entries = layout[sections[s]]
+    if (!Array.isArray(entries)) continue
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i]
+      if (entry && typeof entry === "object" && String(entry.id || "") === id) return entry
+    }
+  }
+  return {}
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     toggleSelection: toggleSelection,
@@ -91,6 +110,7 @@ if (typeof module !== "undefined") {
     reorder: reorder,
     nextSelection: nextSelection,
     applySelection: applySelection,
+    fromBarConfig: fromBarConfig,
     moveBy: moveBy
   }
 }

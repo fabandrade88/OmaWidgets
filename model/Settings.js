@@ -62,7 +62,10 @@ var DEFAULTS = {
   shortBreakMinutes: 5,
   longBreakMinutes: 15,
   longBreakEvery: 4,
-  todoRows: 5
+  todoRows: 5,
+  // Day-first and 24-hour, which is what most of the world writes.
+  dateFormat: "dd-MM-yyyy",
+  timeFormat: "24h"
 }
 
 function bool(value, fallback) {
@@ -115,6 +118,15 @@ function monitorName(value) {
     .replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, 64)
 }
 
+// Kept in step with DateTime.js by tests/datetime.test.js.
+var DATE_FORMATS = ["dd-MM-yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy"]
+var TIME_FORMATS = ["24h", "12h"]
+
+function choice(value, allowed, fallback) {
+  var name = String(value === undefined || value === null ? "" : value).trim()
+  return allowed.indexOf(name) !== -1 ? name : fallback
+}
+
 function normalize(raw) {
   var source = raw && typeof raw === "object" ? raw : {}
   var position = String(source.position || "").trim()
@@ -150,27 +162,12 @@ function normalize(raw) {
     shortBreakMinutes: int(source.shortBreakMinutes, DEFAULTS.shortBreakMinutes, 1, 60),
     longBreakMinutes: int(source.longBreakMinutes, DEFAULTS.longBreakMinutes, 1, 120),
     longBreakEvery: int(source.longBreakEvery, DEFAULTS.longBreakEvery, 1, 12),
-    todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20)
+    todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20),
+    // Validated against the list in DateTime.js, duplicated here for the same
+    // reason POSITIONS is: a QML `.import` would stop node loading this file.
+    dateFormat: choice(source.dateFormat, DATE_FORMATS, DEFAULTS.dateFormat),
+    timeFormat: choice(source.timeFormat, TIME_FORMATS, DEFAULTS.timeFormat)
   }
-}
-
-// The service entry point is handed no settings of its own, so it finds its bar
-// layout entry and reads the inline values from there. This is the same object
-// the bar widget receives, which keeps one source of truth for both surfaces.
-function fromBarConfig(barConfig, pluginId) {
-  var id = String(pluginId || "")
-  var layout = barConfig && typeof barConfig === "object" && barConfig.layout
-    && typeof barConfig.layout === "object" ? barConfig.layout : {}
-  var sections = ["left", "center", "right"]
-  for (var s = 0; s < sections.length; s++) {
-    var entries = layout[sections[s]]
-    if (!Array.isArray(entries)) continue
-    for (var i = 0; i < entries.length; i++) {
-      var entry = entries[i]
-      if (entry && typeof entry === "object" && String(entry.id || "") === id) return entry
-    }
-  }
-  return {}
 }
 
 function cardName(id) {
@@ -184,9 +181,10 @@ if (typeof module !== "undefined") {
     CARD_TODO: CARD_TODO,
     KNOWN_CARDS: KNOWN_CARDS,
     POSITIONS: POSITIONS,
+    DATE_FORMATS: DATE_FORMATS,
+    TIME_FORMATS: TIME_FORMATS,
     DEFAULTS: DEFAULTS,
     normalize: normalize,
-    fromBarConfig: fromBarConfig,
     cardList: cardList,
     cardName: cardName
   }

@@ -67,6 +67,7 @@ Card {
       TodoRow {
         width: parent.width
         todo: modelData
+        config: root.config
         now: root.todos ? root.todos.clock && Date.now() : 0
         onToggled: if (root.todos) root.todos.toggle(modelData.id)
         onArchiveToggled: {
@@ -111,8 +112,15 @@ Card {
 
   TodoComposer {
     width: parent.width
+    config: root.config
     visible: root.composerVisible
-    onSubmitted: function (text, deadline) { if (root.todos) root.todos.add(text, deadline) }
+    onSubmitted: function (text, deadline) {
+      if (root.todos) root.todos.add(text, deadline)
+      // The composer is only borrowed on the desktop — one to-do, then the card
+      // goes back to its + and the keyboard goes back to your window. Where it
+      // is permanent it stays put, so a list can be typed in one go.
+      if (!root.editable) root.composerOpen = false
+    }
     onDismissed: root.composerOpen = false
   }
 

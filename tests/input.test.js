@@ -6,6 +6,7 @@ var t = require("./harness.js")
 var Pods = require("../model/Pods.js")
 var Power = require("../model/Power.js")
 var Settings = require("../model/Settings.js")
+var Arrange = require("../model/Arrange.js")
 var Probe = require("../model/Probe.js")
 
 // --------------------------------------------- power profile: the only write
@@ -129,11 +130,11 @@ t.eq(Settings.normalize({ monitor: new Array(200).join("e") }).monitor.length, 6
 
 var barConfig = { layout: { left: [{ id: "omarchy.menu" }],
   center: [], right: [{ id: "other.plugin" }, { id: "mine", position: "bottom-left" }] } }
-t.eq(Settings.fromBarConfig(barConfig, "mine").position, "bottom-left",
+t.eq(Arrange.fromBarConfig(barConfig, "mine").position, "bottom-left",
   "settings are found on this plugin's own layout entry")
-t.deep(Settings.fromBarConfig(barConfig, "absent"), {}, "a plugin with no entry has no settings")
-t.deep(Settings.fromBarConfig(null, "mine"), {}, "no bar config, no settings")
-t.deep(Settings.fromBarConfig({ layout: { right: "not-an-array" } }, "mine"), {},
+t.deep(Arrange.fromBarConfig(barConfig, "absent"), {}, "a plugin with no entry has no settings")
+t.deep(Arrange.fromBarConfig(null, "mine"), {}, "no bar config, no settings")
+t.deep(Arrange.fromBarConfig({ layout: { right: "not-an-array" } }, "mine"), {},
   "a malformed layout section is skipped")
 
 // ------------------------------------------------------------ probe output

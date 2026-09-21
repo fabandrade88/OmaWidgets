@@ -138,9 +138,18 @@ asks the compositor for the keyboard, and closing it gives the keyboard straight
 back. The overlay and the bar popup already have one, so there the composer is
 simply there.
 
-Type the to-do, and optionally a date as `2026-09-30` and a time as `18:00`.
-Leave the time out and it is due at the end of that day; leave the date out and
-it has no deadline at all. `Escape` closes the composer.
+Type the to-do, and optionally a date and a time. Leave the time out and it is
+due at the end of that day; leave the date out and it has no deadline at all.
+`Escape` closes the composer, and on the desktop adding one closes it too — the
+card goes back to its **+** and the keyboard goes back to your window.
+
+Dates are **DD-MM-YYYY** and the clock is **24-hour** by default; `dateFormat`
+and `timeFormat` change both, and the placeholders, the parsing and every
+deadline shown on the card follow. Parsing is done by the plugin rather than by
+Qt's locale parser, so what the field accepts follows the setting rather than
+whatever locale the session happens to have — and separators are interchangeable,
+so `30/09/2026` is accepted whichever one the format asked for. `6pm`, `18:00`,
+`1830` and `18.30` all read as six in the evening.
 
 ### AirPods
 
@@ -234,7 +243,7 @@ cards are hidden.
 The popup holds everything: the desktop toggle, compact mode, per-core bars, the
 power profile, and three folding sections — **Cards** (a switch each), **Layout**
 (a 3×3 position picker, columns, tile size) and **To-do and Pomodoro** (the four
-durations and how many rows the card lists). Folded, each one shows a summary of
+durations, how many rows the card lists, and the date and clock formats). Folded, each one shows a summary of
 what it is set to, so the panel stays short without hiding what it is doing.
 Changes are written to `~/.config/omarchy/shell.json` as you make them.
 
@@ -326,6 +335,8 @@ typo costs you one setting rather than the widget.
 | `longBreakMinutes` | `15` | 1–120 |
 | `longBreakEvery` | `4` | 1–12 focus rounds before the long break |
 | `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
+| `dateFormat` | `dd-MM-yyyy` | Also `dd/MM/yyyy`, `yyyy-MM-dd`, `MM/dd/yyyy` |
+| `timeFormat` | `24h` | Or `12h` |
 | `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay always spreads them across one row |
 | `cards` order | — | Also the order on the desktop. Dragging a widget rewrites it |
 | `cardWidth` | `268` | 180–520 pixels |
@@ -489,6 +500,7 @@ model/Arrange.js     selecting, hiding and reordering
 model/Todo.js        the to-do file format
 model/TodoList.js    list operations, and how close a deadline is
 model/Pomodoro.js    the focus and break cycle
+model/DateTime.js    reading and writing deadlines in the chosen format
 model/Gpu.js         one shape from three driver families
 model/Pods.js        the librepods status file, defensively
 model/Power.js       battery presentation, and the profile allowlist
@@ -522,6 +534,8 @@ stops being: a file that outgrows the limit is doing more than one job.
   not a JavaScript `Array`.
 - **`todo.test.js`** — the to-do file in both directions, deadline urgency, and
   the Pomodoro cycle.
+- **`datetime.test.js`** — parsing and formatting deadlines in every supported
+  format, including dates that do not exist and the placeholders themselves.
 - **`glyphs.test.js`** — every Nerd Font glyph in the source, against the font
   the bar actually uses. It catches both a codepoint the font lacks and a
   malformed surrogate pair, which is not one character at all and looks like a

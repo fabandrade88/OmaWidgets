@@ -1,4 +1,5 @@
 import QtQuick
+import "model/DateTime.js" as DateTime
 import qs.Commons
 
 // The Pomodoro durations. 25/5/15 every four rounds is the convention this
@@ -9,6 +10,16 @@ Column {
   required property var config
 
   signal timingChanged(string key, int value)
+  signal formatPicked(string key, string value)
+
+  readonly property var dateOptions: {
+    var out = []
+    for (var i = 0; i < DateTime.DATE_FORMATS.length; i++) {
+      var id = DateTime.DATE_FORMATS[i]
+      out.push({ value: id, label: DateTime.dateLabel(id) })
+    }
+    return out
+  }
 
   readonly property color foreground: Color.popups.text
 
@@ -64,5 +75,23 @@ Column {
     minimum: 1
     maximum: 20
     onChanged: function (value) { root.timingChanged("todoRows", value) }
+  }
+
+  ChoiceRow {
+    width: parent.width
+    label: "Date format"
+    description: "How deadlines are typed and shown. Separators are interchangeable."
+    options: root.dateOptions
+    current: DateTime.dateFormat(root.config.dateFormat)
+    onPicked: function (value) { root.formatPicked("dateFormat", value) }
+  }
+
+  ChoiceRow {
+    width: parent.width
+    label: "Clock"
+    options: [{ value: DateTime.HOUR_24, label: "24-hour" },
+      { value: DateTime.HOUR_12, label: "12-hour" }]
+    current: DateTime.timeFormat(root.config.timeFormat)
+    onPicked: function (value) { root.formatPicked("timeFormat", value) }
   }
 }

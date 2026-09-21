@@ -4,6 +4,30 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.6.0] — 2026-09-21
+
+### Added
+
+- **Date and clock formats are settings.** Dates default to **DD-MM-YYYY** and
+  the clock to **24-hour**; `dd/MM/yyyy`, `yyyy-MM-dd` and `MM/dd/yyyy` are the
+  alternatives, and both are pickable in the popup. The setting drives the
+  placeholders, the parsing and every deadline shown on a card.
+
+  Parsing is done by the plugin rather than handed to Qt's locale parser, so what
+  a deadline field accepts follows the setting rather than whatever locale the
+  session happens to have — and it can be tested without one. Separators are
+  interchangeable, so `30/09/2026` is accepted whichever one the format asked
+  for, and `6pm`, `18:00`, `1830` and `18.30` all read as six in the evening. A
+  date that does not exist, like the 31st of September, is refused rather than
+  rolled forward into October the way `Date()` would.
+
+### Fixed
+
+- **The composer stayed open after adding a to-do from the desktop card.** It
+  now closes, the **+** comes back, and the keyboard returns to the window you
+  were using. Where the composer is permanent — the overlay and the bar popup —
+  it stays put and keeps the cursor, so a list can be typed in one go.
+
 ## [1.5.1] — 2026-09-21
 
 ### Fixed
