@@ -65,6 +65,15 @@ Column {
   readonly property bool timeValid: timeParts !== null
   readonly property bool canSubmit: Todo.text(textField.text) !== "" && dayValid && timeValid
 
+  // Hands the keyboard back. A surface that dispatches keys itself — the
+  // overlay's key catcher — stops doing so while a field here holds focus, so
+  // letting go has to be something the composer can actually do.
+  function release() {
+    textField.focus = false
+    dayField.focus = false
+    timeField.focus = false
+  }
+
   function submit() {
     if (!canSubmit) return
     root.submitted(textField.text, root.deadline)
@@ -83,7 +92,10 @@ Column {
     placeholderText: "Add a to-do"
     foreground: Color.popups.text
     onAccepted: root.submit()
-    Keys.onEscapePressed: root.dismissed()
+    Keys.onEscapePressed: {
+      root.release()
+      root.dismissed()
+    }
   }
 
   Row {

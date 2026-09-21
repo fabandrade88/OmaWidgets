@@ -26,7 +26,15 @@ Card {
 
   signal composingChanged(bool active)
 
-  onComposerOpenChanged: root.composingChanged(composerOpen)
+  // "This card wants the keyboard": the desktop asks the compositor for one,
+  // and the overlay stops dispatching keys of its own while it is true.
+  //
+  // Open is not the same as focused. On the desktop the composer is only there
+  // once asked for, so opening it is the request; in the overlay it is always
+  // there, and the request is a field actually holding focus.
+  readonly property bool keyboardWanted: composerOpen || (composerVisible && composer.focused)
+
+  onKeyboardWantedChanged: root.composingChanged(keyboardWanted)
 
   // The archive is a different list, not a place to add to: opening it puts the
   // composer away, and the keyboard with it.
@@ -147,6 +155,7 @@ Card {
   }
 
   TodoComposer {
+    id: composer
     width: parent.width
     config: root.config
     visible: root.composerVisible

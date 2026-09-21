@@ -11,8 +11,13 @@ anchored to one corner, so the rest of your wallpaper keeps its own
 double-click-to-change-background behaviour.
 
 **As an overlay.** The same cards, side by side on a dimmed full-screen surface,
-summoned by a keybind and dismissed with `Escape`. One layout, one set of
-readings, two ways to look at them.
+summoned by a keybind and dismissed with `Escape` or a click outside them. One
+layout, one set of readings, two ways to look at them.
+
+Everything on a card works there: the transport, the profile segments, ticking
+a to-do off, the archive. Typing needs the field clicked first — the overlay
+dispatches keys of its own until something on a card takes the keyboard, and
+gets them back when `Escape` lets the field go.
 
 <p align="center">
   <img src="overlay.png" alt="The summoned overlay" width="760">

@@ -4,6 +4,21 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.5] — 2026-09-21
+
+### Fixed
+
+- **Nothing in the summoned overlay could be clicked.** A MouseArea meant to
+  swallow clicks landing in the gaps between cards was the stack's last child,
+  which put it over every card: it took each press before a button, a checkbox
+  or a text field could. Dismissing now tests the click against the stack's own
+  rectangle instead, so nothing sits over the cards at all.
+- **And nothing in it could be typed into.** The overlay wraps the cards in the
+  shell's `PanelKeyCatcher`, which dispatches letters, Space and Return as
+  commands before any focused item sees them — so `j` moved a cursor instead of
+  typing a `j`. The catcher now stands down while a field on a card holds
+  focus, which is what `blocked` is for.
+
 ## [1.7.4] — 2026-09-21
 
 ### Changed

@@ -24,6 +24,11 @@ Item {
   property var config: Settings.DEFAULTS
   property bool opened: false
 
+  // True while something on a card is being typed into. The key catcher below
+  // dispatches h/j/k/l, Space and Return as commands, which would otherwise
+  // never reach the to-do composer's fields.
+  property bool composing: false
+
   signal dismissed()
   signal profileRequested(string profile)
 
@@ -73,16 +78,27 @@ Item {
       color: Color.menu.scrim
     }
 
-    // Clicking the scrim dismisses. The stack sits above this with its own
-    // swallowing MouseArea, so a click on a card never closes the overlay.
+    // Clicking away dismisses — which is everywhere except the cards
+    // themselves and the gaps between them.
+    //
+    // The test is the stack's own rectangle rather than a MouseArea laid over
+    // the stack: one covering the cards takes every press before they do, and
+    // an overlay whose cards cannot be clicked is worse than one that is easy
+    // to dismiss by accident.
     MouseArea {
       anchors.fill: parent
-      onClicked: root.dismissed()
+      onClicked: function (mouse) {
+        var local = mapToItem(stack, mouse.x, mouse.y)
+        var inside = local.x >= 0 && local.y >= 0
+          && local.x <= stack.width && local.y <= stack.height
+        if (!inside) root.dismissed()
+      }
     }
 
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
+      blocked: root.composing
       onCloseRequested: root.dismissed()
 
       CardStack {
@@ -96,13 +112,7 @@ Item {
         todos: root.todos
         config: root.overlayConfig
         onProfileRequested: function (profile) { root.profileRequested(profile) }
-
-        MouseArea {
-          anchors.fill: parent
-          // Swallows clicks that land on the stack's own padding so only the
-          // scrim dismisses.
-          onClicked: {}
-        }
+        onComposingChanged: function (active) { root.composing = active }
       }
     }
   }
