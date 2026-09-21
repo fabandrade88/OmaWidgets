@@ -105,42 +105,29 @@ Card {
     }
   }
 
-  // On the desktop, asking to add is what hands the surface a keyboard.
+  // One row of actions rather than two: adding, the archive and the sweep-up
+  // are the same kind of thing, and a card on the desktop should spend its
+  // height on the list.
   //
-  // It stays put while the composer is open, as an X: clicking away closes the
-  // composer too, but that depends on the surface having been given the
-  // keyboard, and a button that is simply there does not.
-  PanelActionButton {
-    anchors.horizontalCenter: parent.horizontalCenter
-    visible: root.requestable && !root.editable && !root.showArchive
-    iconText: root.composerOpen ? "󰅖" : "󰐕"
-    tooltipText: root.composerOpen ? "Never mind" : "Add a to-do"
-    foreground: root.foreground
-    bordered: true
-    onClicked: root.composerOpen = !root.composerOpen
-  }
-
-  TodoComposer {
-    width: parent.width
-    config: root.config
-    visible: root.composerVisible
-    onSubmitted: function (text, deadline) {
-      if (root.todos) root.todos.add(text, deadline)
-      // The composer is only borrowed on the desktop — one to-do, then the card
-      // goes back to its + and the keyboard goes back to your window. Where it
-      // is permanent it stays put, so a list can be typed in one go.
-      if (!root.editable) root.composerOpen = false
-    }
-    onDismissed: root.composerOpen = false
-  }
-
-  // Reading the archive — and putting something back, or deleting it for good —
-  // needs no keyboard, so these are offered wherever the card can be touched at
-  // all, the desktop layer included.
+  // Reading the archive needs no keyboard, so it is offered wherever the card
+  // can be touched at all — the desktop layer included. Adding does need one,
+  // so the + is only there when the surface can ask for it, and it stays put as
+  // an X while the composer is open: clicking away closes the composer too, but
+  // that depends on the surface having been given the keyboard, and a button
+  // that is simply there does not.
   Row {
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.editable || root.requestable
     spacing: Style.spacing.sm
+
+    PanelActionButton {
+      visible: root.requestable && !root.editable && !root.showArchive
+      iconText: root.composerOpen ? "󰅖" : "󰐕"
+      tooltipText: root.composerOpen ? "Never mind" : "Add a to-do"
+      foreground: root.foreground
+      bordered: true
+      onClicked: root.composerOpen = !root.composerOpen
+    }
 
     PanelActionButton {
       iconText: root.showArchive ? "󰗇" : "󱉙"
@@ -157,5 +144,19 @@ Card {
       foreground: root.foreground
       onClicked: if (root.todos) root.todos.archiveDone()
     }
+  }
+
+  TodoComposer {
+    width: parent.width
+    config: root.config
+    visible: root.composerVisible
+    onSubmitted: function (text, deadline) {
+      if (root.todos) root.todos.add(text, deadline)
+      // The composer is only borrowed on the desktop — one to-do, then the card
+      // goes back to its + and the keyboard goes back to your window. Where it
+      // is permanent it stays put, so a list can be typed in one go.
+      if (!root.editable) root.composerOpen = false
+    }
+    onDismissed: root.composerOpen = false
   }
 }

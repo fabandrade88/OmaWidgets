@@ -4,6 +4,14 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.4] — 2026-09-21
+
+### Changed
+
+- **The to-do card's buttons are one row, not two.** Adding, the archive and
+  the sweep-up sat stacked, which cost the card height the list wanted. The
+  card is shorter by a row on every surface.
+
 ## [1.7.3] — 2026-09-21
 
 ### Added
