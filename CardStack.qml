@@ -22,6 +22,7 @@ Item {
   signal profileRequested(string profile)
   signal selectRequested(string id)
   signal orderRequested(var ids)
+  signal hideRequested(string id)
 
   // Normalised on the way in, so a caller that is still being constructed (or a
   // hand-edited shell.json) yields the defaults rather than a broken binding.
@@ -54,6 +55,7 @@ Item {
       onProfileRequested: function (profile) { root.profileRequested(profile) }
       onSelectRequested: function (id) { root.selectRequested(id) }
       onOrderRequested: function (ids) { root.orderRequested(ids) }
+      onHideRequested: function (id) { root.hideRequested(id) }
     }
   }
 
@@ -67,6 +69,7 @@ Item {
       onProfileRequested: function (profile) { root.profileRequested(profile) }
       onSelectRequested: function (id) { root.selectRequested(id) }
       onOrderRequested: function (ids) { root.orderRequested(ids) }
+      onHideRequested: function (id) { root.hideRequested(id) }
     }
   }
 }

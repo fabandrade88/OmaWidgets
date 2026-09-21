@@ -17,6 +17,10 @@ BorderSurface {
   property bool compact: false
   property bool alert: false
   property bool selected: false
+  property bool closable: false
+  property bool hovered: false
+
+  signal closeRequested()
   property real backgroundOpacity: 0.92
 
   readonly property color foreground: Color.popups.text
@@ -95,6 +99,23 @@ BorderSurface {
         elide: Text.ElideRight
       }
     }
+  }
+
+  // Hover is tracked with a handler rather than a MouseArea so it never takes
+  // the press away from anything inside the widget.
+  HoverHandler {
+    id: hover
+    enabled: root.closable
+    onHoveredChanged: root.hovered = hovered
+  }
+
+  CloseButton {
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.margins: Style.spacing.xs
+    z: 20
+    shown: root.closable && root.hovered
+    onActivated: root.closeRequested()
   }
 
   Column {

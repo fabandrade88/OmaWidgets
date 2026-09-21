@@ -67,7 +67,7 @@ if (!fs.existsSync(FONT)) {
 
 // Degree sign, middle dot, em dash, minus sign. Everything else non-ASCII in
 // this codebase should be a Nerd Font icon.
-var ALLOWED_TEXT = [0x00B0, 0x00B7, 0x2014, 0x2212, 0x2018, 0x2019, 0x201C, 0x201D, 0x2026]
+var ALLOWED_TEXT = [0x00B0, 0x00B7, 0x00D7, 0x2014, 0x2212, 0x2018, 0x2019, 0x201C, 0x201D, 0x2026]
 
 var codes = cmapCodepoints(FONT)
 var root = path.join(__dirname, "..")

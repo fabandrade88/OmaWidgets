@@ -48,6 +48,17 @@ t.eq(Power.parseActiveProfile('s "performance"'), "performance", "busctl output 
 t.eq(Power.parseActiveProfile('s "turbo"'), "", "an unknown active profile is discarded")
 t.eq(Power.parseActiveProfile("Failed to get property"), "", "a busctl error is not a profile")
 
+// The compact tile has one gesture, so tapping it cycles and wraps; the popup's
+// arrow keys step and stop, the way arrow keys on a slider do.
+t.eq(Power.nextProfileIndex(offered, "power-saver", 1, true), 1, "cycling moves along")
+t.eq(Power.nextProfileIndex(offered, "performance", 1, true), 0,
+  "and wraps at the end, so one gesture can reach every profile")
+t.eq(Power.nextProfileIndex(offered, "power-saver", -1, true), 2, "wrapping works backwards too")
+t.eq(Power.nextProfileIndex(offered, "performance", 1, false), 2, "stepping stops at the end")
+t.eq(Power.nextProfileIndex(offered, "power-saver", -1, false), 0, "and at the start")
+t.eq(Power.nextProfileIndex(offered, "", 1, true), 0, "an unknown current profile starts at the first")
+t.eq(Power.nextProfileIndex([], "balanced", 1, true), -1, "with no profiles there is nowhere to go")
+
 // ------------------------------------------------ librepods: foreign JSON
 
 var REAL = '{"case":{"available":true,"charging":false,"level":40},"connected":false,'

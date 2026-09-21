@@ -31,6 +31,17 @@ QtObject {
     selectedCard = ""
   }
 
+  // Removes one widget from the list, which is what the X on a hovered widget
+  // asks for. It comes back from the bar popup's card toggles, where the full
+  // list lives — hiding here and switching it off there are the same thing.
+  function hide(id) {
+    var name = String(id || "")
+    if (name === "" || cards.indexOf(name) === -1) return false
+    if (selectedCard === name) selectedCard = ""
+    cardsChangeRequested(Arrange.without(cards, name))
+    return true
+  }
+
   // Removes the selected widget from the list. It comes back from the bar
   // popup's card toggles, which is where the full list lives.
   function hideSelected() {

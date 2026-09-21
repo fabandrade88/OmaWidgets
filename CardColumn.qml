@@ -43,6 +43,8 @@ PackedLayout {
     id: systemComponent
     SystemCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       system: root.system; gpuService: root.gpuService; config: root.settings }
   }
 
@@ -50,6 +52,8 @@ PackedLayout {
     id: podsComponent
     PodsCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       pods: root.pods; config: root.settings }
   }
 
@@ -57,6 +61,8 @@ PackedLayout {
     id: batteryComponent
     BatteryCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       power: root.power; config: root.settings }
   }
 
@@ -64,6 +70,8 @@ PackedLayout {
     id: powerComponent
     PowerCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       power: root.power; config: root.settings
       onProfileRequested: function (profile) { root.profileRequested(profile) } }
   }
@@ -72,6 +80,8 @@ PackedLayout {
     id: mediaComponent
     MediaCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       media: root.media; config: root.settings }
   }
 }

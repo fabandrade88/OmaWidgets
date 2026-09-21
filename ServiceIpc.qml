@@ -48,6 +48,8 @@ Item {
     // Reads the current profile, and sets it only through the allowlisted path.
     function profile(): string { return root.service.power.activeProfile }
     function setProfile(name: string): string { return root.service.setProfile(name) ? "ok" : "rejected" }
+    // Wraps, like tapping the compact tile: one verb reaches every profile.
+    function cycleProfile(): string { root.service.cycleProfile(1); return root.service.power.activeProfile }
   }
 
 }

@@ -26,6 +26,7 @@ Item {
 
   signal selectRequested(string id)
   signal orderRequested(var ids)
+  signal hideRequested(string id)
 
   // Visual order. Held separately from `ids` so a drag can reorder without
   // changing the Repeater's model, which would tear down and rebuild the cards

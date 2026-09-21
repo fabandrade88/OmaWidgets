@@ -147,6 +147,7 @@ Item {
     onProfileRequested: function (profile) { root.setProfile(profile) }
     onSelectRequested: function (id) { arranger.select(id) }
     onOrderRequested: function (ids) { arranger.applyOrder(ids) }
+    onHideRequested: function (id) { arranger.hide(id) }
   }
 
   // The probe finishes after the services are built, so the first samples are

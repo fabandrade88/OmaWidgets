@@ -72,12 +72,17 @@ Item {
     return true
   }
 
+  // Wraps: the compact tile has one gesture, so tapping it has to be able to get
+  // back to Saver from Performance rather than stopping at the end.
   function cycleProfile(direction) {
-    if (profiles.length === 0) return false
-    var at = profiles.indexOf(activeProfile)
-    var step = direction < 0 ? -1 : 1
-    var next = at < 0 ? 0 : Math.max(0, Math.min(profiles.length - 1, at + step))
-    return setProfile(profiles[next])
+    var next = Power.nextProfileIndex(profiles, activeProfile, direction, true)
+    return next < 0 ? false : setProfile(profiles[next])
+  }
+
+  // Stops at the ends, for the popup's arrow keys.
+  function stepProfile(direction) {
+    var next = Power.nextProfileIndex(profiles, activeProfile, direction, false)
+    return next < 0 ? false : setProfile(profiles[next])
   }
 
   function applyProfileList(raw) {

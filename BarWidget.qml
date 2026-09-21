@@ -165,7 +165,7 @@ Panel {
       // Left and right walk the power profiles, which is the one control here
       // worth reaching without the mouse.
       onMoveRequested: function (dx, dy) {
-        if (dx !== 0 && root.service) root.service.cycleProfile(dx)
+        if (dx !== 0 && root.service) root.service.power.stepProfile(dx)
       }
 
       Flickable {

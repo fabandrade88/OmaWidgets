@@ -30,6 +30,7 @@ Item {
   signal profileRequested(string profile)
   signal selectRequested(string id)
   signal orderRequested(var ids)
+  signal hideRequested(string id)
 
   readonly property var placement: Layout.anchorsFor(config.position)
 
@@ -108,6 +109,7 @@ Item {
         onProfileRequested: function (profile) { root.profileRequested(profile) }
         onSelectRequested: function (id) { root.selectRequested(id) }
         onOrderRequested: function (ids) { root.orderRequested(ids) }
+        onHideRequested: function (id) { root.hideRequested(id) }
       }
     }
   }

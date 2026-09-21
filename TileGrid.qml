@@ -49,6 +49,8 @@ PackedLayout {
     radius: root.settings.tileRadius
     backgroundOpacity: root.settings.opacity
     selected: parent.selected
+    closable: root.arrangeable
+    onCloseRequested: root.hideRequested(parent.cardId)
   }
 
   Component {
@@ -59,6 +61,8 @@ PackedLayout {
       radius: root.settings.tileRadius
       backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       system: root.system
       gpuService: root.gpuService
       config: root.settings
@@ -73,6 +77,8 @@ PackedLayout {
       radius: root.settings.tileRadius
       backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       pods: root.pods
       config: root.settings
     }
@@ -122,6 +128,8 @@ PackedLayout {
       radius: root.settings.tileRadius
       backgroundOpacity: root.settings.opacity
       selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
       media: root.media
       config: root.settings
     }

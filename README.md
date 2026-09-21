@@ -104,11 +104,16 @@ right pod and the case — so the pair and the case are read side by side rather
 than as three stacked bars. Charging breaks the ring at twelve o'clock. In compact
 mode the same rings pack into a two-by-two square.
 
-The marks are drawn, not set in a font: no Nerd Font glyph is an AirPod, and the
-nearest candidates say "audio" without saying which bud. Three rounded rectangles
-mirror cleanly, so the left and right marks are genuinely mirrored rather than one
-picture used twice. An AirPods Max has a single battery and no case, so it gets
-one gauge and a headphone mark.
+The marks are drawn here rather than taken from a font or from a vendor's
+artwork. No Nerd Font glyph is an AirPod, and the nearest candidates say "audio"
+without saying *which* bud — the one thing these marks exist to say. The
+[omarchy-pods](https://github.com/thisisgm/omarchy-pods) plugin solves it with
+Apple's own product outlines lifted from apple.com, which is a reasonable choice
+for a plugin but not one worth copying into a separately published one. These are
+original silhouettes: one path each, so the head, the ear tip and the stem union
+cleanly instead of showing seams where overlapping rectangles meet, and the pair
+is genuinely mirrored rather than one picture used twice. An AirPods Max has a
+single battery and no case, so it gets one gauge and a headphone mark.
 
 Per-pod and case battery, charging and in-ear hints, the listening mode and the
 case lid, all read from the status file the
@@ -138,6 +143,10 @@ Saver, Balanced and Performance as one segmented control. Only the profiles the
 running `power-profiles-daemon` actually reported get a segment; a machine
 without it shows a line saying so rather than three buttons that would do
 nothing.
+
+The compact tile has one gesture, so tapping it cycles and wraps round: Saver,
+Balanced, Performance, Saver again. The popup's arrow keys step and stop at the
+ends instead, the way arrow keys on a slider do.
 
 Switching goes through Omarchy's own `omarchy-powerprofiles-set`, so your choice
 is remembered per power source exactly as the stock power panel remembers it —
@@ -183,42 +192,40 @@ Changes are written to `~/.config/omarchy/shell.json` as you make them.
 
 ## Arranging the desktop
 
-Click a widget on the desktop to select it — it takes an accent border. Click it
-again to let go. Then:
+**Hover a widget** and a small X appears in its corner. Clicking it hides the
+widget — and because hiding is the same thing as switching it off, the bar
+popup's toggle for it goes off at the same time. Turn it back on there.
 
-- **Drag it** anywhere in the stack to reorder. The others reflow around it as
-  you go, and the new order is written to `shell.json` when you drop.
-- **Hide it** with a keybind, which removes it from the list. It comes back from
-  the bar popup's card toggles, where the full list lives.
+**Click a widget** to select it; it takes an accent border, and clicking it again
+lets go. **Drag it** anywhere in the stack to reorder: the others reflow around
+it as you go, and the new order is written to `shell.json` when you drop.
 
 Selecting first also means a click does not fire the widget underneath it: the
 first tap on the media tile selects, the second plays or pauses. The transport
-buttons and the profile segments work on the first click either way.
+buttons, the profile segments and the X all work on the first click either way.
 
-Everything here is scriptable, so the desktop can be arranged from the keyboard
-as well as with a pointer.
+Everything here is scriptable, so the desktop can also be arranged from the
+keyboard.
 
 ### Keybindings
 
 Add to `~/.config/hypr/bindings.lua`:
 
+Optional — hiding and arranging work with the mouse alone, so these are for
+anyone who would rather not reach for it:
+
 ```lua
-o.bind("SUPER + ALT + W",         "Hide widget",     "omarchy-shell omawidgets hideSelected")
 o.bind("SUPER + ALT + TAB",       "Next widget",     "omarchy-shell omawidgets selectNext")
+o.bind("SUPER + ALT + W",         "Hide widget",     "omarchy-shell omawidgets hideSelected")
 o.bind("SUPER + ALT + RIGHT",     "Move widget on",  "omarchy-shell omawidgets moveSelectedForward")
 o.bind("SUPER + ALT + LEFT",      "Move widget back","omarchy-shell omawidgets moveSelectedBack")
 o.bind("SUPER + ALT + O",         "Widgets overlay", "omarchy-shell omawidgets toggle")
 o.bind("SUPER + SHIFT + ALT + W", "Toggle widgets",  "omarchy-shell omawidgets-bar toggleDesktop")
 ```
 
-> **`SUPER + W` is Omarchy's Close window.** It is bound in
+> **`SUPER + W` is Omarchy's Close window**, bound in
 > `default/hypr/bindings/tiling.lua`, so this plugin does not take it. If you
-> want it anyway, unbind it first — and pick something else for closing windows:
->
-> ```lua
-> hl.unbind("SUPER + W")
-> o.bind("SUPER + W", "Hide widget", "omarchy-shell omawidgets hideSelected")
-> ```
+> want it anyway, unbind it first — and give closing windows another key.
 
 ### IPC
 
@@ -227,6 +234,7 @@ omarchy-shell omawidgets toggle              # summon or dismiss the overlay
 omarchy-shell omawidgets refresh             # re-probe hardware and re-read everything
 omarchy-shell omawidgets profile             # print the active power profile
 omarchy-shell omawidgets setProfile balanced # set it (rejects anything else)
+omarchy-shell omawidgets cycleProfile        # next profile, wrapping
 omarchy-shell omawidgets-bar toggleDesktop   # show or hide the desktop cards
 omarchy-shell omawidgets-bar position top-left   # move the cards; prints where they ended up
 
@@ -402,7 +410,7 @@ PackedLayout.qml     places, selects and drags; CardColumn.qml and TileGrid.qml
 Arranger.qml         the selection, and what hiding or dragging asks for
 
 SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
-Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml
+Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml  CloseButton.qml
 IconRing.qml  MetricGauge.qml  PodGauge.qml  PodMark.qml  MediaControls.qml
 MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
 PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml

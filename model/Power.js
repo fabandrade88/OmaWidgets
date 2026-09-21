@@ -76,6 +76,19 @@ function parseActiveProfile(raw) {
   return isKnownProfile(name) ? name : ""
 }
 
+// Where the next profile is. Two behaviours on purpose: a tile has one gesture,
+// so tapping it cycles and wraps round to the start; arrow keys in the popup
+// step and stop at the ends, the way arrow keys on a slider do.
+function nextProfileIndex(profiles, active, delta, wrap) {
+  var list = Array.isArray(profiles) ? profiles : []
+  if (list.length === 0) return -1
+  var at = list.indexOf(String(active || ""))
+  var step = delta < 0 ? -1 : 1
+  if (at < 0) return delta < 0 ? list.length - 1 : 0
+  if (wrap) return (at + step + list.length) % list.length
+  return Math.max(0, Math.min(list.length - 1, at + step))
+}
+
 function profileLabel(name) { return LABELS[name] || String(name || "") }
 function profileDescription(name) { return DESCRIPTIONS[name] || "" }
 function profileIcon(name) { return ICONS[name] || ICONS[BALANCED] }
@@ -119,6 +132,7 @@ if (typeof module !== "undefined") {
     sanitizeProfile: sanitizeProfile,
     parseProfileList: parseProfileList,
     parseActiveProfile: parseActiveProfile,
+    nextProfileIndex: nextProfileIndex,
     profileLabel: profileLabel,
     profileDescription: profileDescription,
     profileIcon: profileIcon,

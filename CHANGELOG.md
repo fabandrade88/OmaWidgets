@@ -4,6 +4,39 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.4.0] — 2026-09-21
+
+### Added
+
+- **An X on a hovered widget hides it.** Hiding lives on the widget itself rather
+  than behind a keybind: nothing to discover, nothing to configure, and no chance
+  of colliding with a binding Omarchy already uses. Hiding and switching the
+  widget off in the bar popup are the same thing, so the popup's toggle follows.
+- `omarchy-shell omawidgets cycleProfile`.
+
+### Fixed
+
+- **The compact power tile could not get back to Saver.** Tapping it clamped at
+  the end of the list instead of wrapping, so Performance was a dead end. Tapping
+  now cycles round; the popup's arrow keys still step and stop at the ends, the
+  way arrow keys on a slider do.
+- The battery and power tiles were missing the close button their neighbours had.
+
+### Changed
+
+- **The AirPods marks are drawn as proper silhouettes** — a head, an ear tip and
+  a stem clearly narrower than the head, in one path each so the shapes union
+  without seams. The previous marks were overlapping rounded rectangles that read
+  as a blob. They also scale correctly now: the mark was being scaled about the
+  middle of a box sized in screen pixels while its coordinates ran 0–100, which
+  pushed it outside its own bounds and clipped it to a fragment at any size but
+  one.
+
+  The [omarchy-pods](https://github.com/thisisgm/omarchy-pods) plugin draws its
+  marks from Apple's own product outlines taken from apple.com. That is a
+  reasonable choice for that plugin, but not one worth copying into a separately
+  published one, so these are original.
+
 ## [1.3.0] — 2026-09-21
 
 ### Added
