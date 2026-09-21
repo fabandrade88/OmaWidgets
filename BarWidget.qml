@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "model/Arrange.js" as Arrange
 import "model/Layout.js" as Layout
 import "model/Settings.js" as Settings
 
@@ -51,25 +52,6 @@ Panel {
     write({ desktop: !config.desktop })
   }
 
-  function toggleCard(card) {
-    var cards = config.cards.slice()
-    var at = cards.indexOf(card)
-    if (at === -1) {
-      // Re-inserted in the canonical order rather than appended, so toggling a
-      // card off and on does not quietly reorder the stack.
-      cards.push(card)
-      cards.sort(function (a, b) {
-        return Settings.KNOWN_CARDS.indexOf(a) - Settings.KNOWN_CARDS.indexOf(b)
-      })
-    } else {
-      cards.splice(at, 1)
-    }
-    write({ cards: cards })
-  }
-
-  // An unknown position leaves the cards where they are. Normalising alone would
-  // fall back to the default, which for someone who asked for something that
-  // does not exist is a worse answer than doing nothing.
   function setPosition(position) {
     if (Layout.POSITIONS.indexOf(String(position)) === -1) return false
     write({ position: position })
@@ -184,12 +166,19 @@ Panel {
           onDesktopToggled: root.toggleDesktop()
           onCompactToggled: root.write({ compact: !root.config.compact })
           onCoreBarsToggled: root.write({ showCoreBars: !root.config.showCoreBars })
-          onCardToggled: function (card) { root.toggleCard(card) }
+          onCardsPicked: function (cards) {
+            root.write({ cards: Arrange.applySelection(root.config.cards, cards, Settings.KNOWN_CARDS) })
+          }
           onPositionPicked: function (position) { root.setPosition(position) }
           onOverlayRequested: root.openOverlay()
           onProfileRequested: function (profile) { root.setProfile(profile) }
           onColumnsChanged: function (value) { root.write({ columns: value }) }
           onTileSizeChanged: function (value) { root.write({ tileSize: value }) }
+          onSettingChanged: function (key, value) {
+            var change = ({})
+            change[key] = value
+            root.write(change)
+          }
         }
       }
     }

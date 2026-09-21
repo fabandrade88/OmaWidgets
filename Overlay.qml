@@ -67,6 +67,7 @@ Item {
       pods: root.service.pods
       power: root.service.power
       media: root.service.media
+      todos: root.service.todos
       config: root.service.config
       onDismissed: root.dismiss()
       onProfileRequested: function (profile) { root.service.setProfile(profile) }

@@ -20,6 +20,7 @@ Item {
   required property var pods
   required property var power
   required property var media
+  required property var todos
   property var config: Settings.DEFAULTS
   property bool opened: false
 
@@ -85,6 +86,7 @@ Item {
         pods: root.pods
         power: root.power
         media: root.media
+        todos: root.todos
         config: root.overlayConfig
         onProfileRequested: function (profile) { root.profileRequested(profile) }
 

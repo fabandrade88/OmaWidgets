@@ -68,12 +68,29 @@ function moveBy(cards, id, delta) {
   return source
 }
 
+// The card list is both "which widgets are on" and "what order they sit in", so
+// switching one on in the popup must not disturb the order a drag established.
+// Ones already on keep their place; newly chosen ones join at the end, in the
+// canonical order, so turning two on at once is not arbitrary.
+function applySelection(current, selected, canonical) {
+  var existing = list(current)
+  var wanted = list(selected)
+  var order = list(canonical)
+  var out = []
+  for (var i = 0; i < existing.length; i++)
+    if (wanted.indexOf(existing[i]) !== -1 && out.indexOf(existing[i]) === -1) out.push(existing[i])
+  for (var j = 0; j < order.length; j++)
+    if (wanted.indexOf(order[j]) !== -1 && out.indexOf(order[j]) === -1) out.push(order[j])
+  return out
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     toggleSelection: toggleSelection,
     without: without,
     reorder: reorder,
     nextSelection: nextSelection,
+    applySelection: applySelection,
     moveBy: moveBy
   }
 }

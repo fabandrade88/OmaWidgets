@@ -9,6 +9,7 @@ var CARD_PODS = "pods"
 var CARD_BATTERY = "battery"
 var CARD_POWER = "power"
 var CARD_MEDIA = "media"
+var CARD_TODO = "todo"
 
 // Compact draws one tile per card, not one per reading: the Performance tile is
 // a wide rectangle holding CPU, memory and GPU together, rather than three
@@ -23,6 +24,7 @@ LABELS[CARD_MEDIA] = "NOW PLAYING"
 LABELS[CARD_PODS] = "AIRPODS"
 LABELS[CARD_BATTERY] = "BATTERY"
 LABELS[CARD_POWER] = "POWER"
+LABELS[CARD_TODO] = "TO-DO"
 
 var POSITIONS = [
   "top-left", "top-center", "top-right",
@@ -81,7 +83,7 @@ function anchorsFor(position) {
 if (typeof module !== "undefined") {
   module.exports = {
     CARD_SYSTEM: CARD_SYSTEM, CARD_PODS: CARD_PODS, CARD_BATTERY: CARD_BATTERY,
-    CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA,
+    CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA, CARD_TODO: CARD_TODO,
     TILE_SPANS: TILE_SPANS,
     POSITIONS: POSITIONS,
     defaultState: defaultState,

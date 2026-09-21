@@ -25,6 +25,17 @@ Column {
   signal profileRequested(string profile)
   signal columnsChanged(int columns)
   signal tileSizeChanged(int size)
+  signal cardsPicked(var cards)
+  signal settingChanged(string key, int value)
+
+  readonly property var cardOptions: {
+    var out = []
+    for (var i = 0; i < Settings.KNOWN_CARDS.length; i++) {
+      var id = Settings.KNOWN_CARDS[i]
+      out.push({ value: id, label: Settings.cardName(id) })
+    }
+    return out
+  }
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -103,35 +114,26 @@ Column {
 
   PanelSeparator { width: parent.width }
 
-  PanelSectionHeader {
+  LayoutSettings {
     width: parent.width
-    text: "Position"
-    foreground: root.foreground
+    config: root.config
+    onPositionPicked: function (value) { root.positionPicked(value) }
+    onColumnsChanged: function (value) { root.columnsChanged(value) }
+    onTileSizeChanged: function (value) { root.tileSizeChanged(value) }
   }
 
-  PositionGrid {
-    anchors.horizontalCenter: parent.horizontalCenter
-    position: root.config.position
-    onPicked: function (value) { root.positionPicked(value) }
-  }
-
-  PanelSeparator { width: parent.width }
-
-  PanelSectionHeader {
+  PanelSeparator {
     width: parent.width
-    text: "Cards"
-    foreground: root.foreground
+    visible: todoSettings.visible
   }
 
-  Repeater {
-    model: Settings.KNOWN_CARDS
-
-    ToggleRow {
-      width: root.width
-      label: Settings.cardName(modelData)
-      checked: root.config.cards.indexOf(modelData) !== -1
-      onToggled: root.cardToggled(modelData)
-    }
+  TodoSettings {
+    id: todoSettings
+    width: parent.width
+    // Only worth the space when the card that uses it is switched on.
+    visible: root.config.cards.indexOf(Settings.CARD_TODO) !== -1
+    config: root.config
+    onTimingChanged: function (key, value) { root.settingChanged(key, value) }
   }
 
   PanelSeparator {

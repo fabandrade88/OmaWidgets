@@ -13,6 +13,7 @@ PackedLayout {
   required property var pods
   required property var power
   required property var media
+  required property var todos
   property var settings: null
   property var presence: Layout.defaultState()
 
@@ -38,6 +39,7 @@ PackedLayout {
         if (cardId === Layout.CARD_BATTERY) return batteryComponent
         if (cardId === Layout.CARD_POWER) return powerComponent
         if (cardId === Layout.CARD_MEDIA) return mediaComponent
+        if (cardId === Layout.CARD_TODO) return todoComponent
         return null
       }
     }
@@ -116,6 +118,22 @@ PackedLayout {
       // the overlay, so there it acts on the first tap as before.
       interactive: root.power.profilesAvailable && (!root.arrangeable || parent.selected)
       onActivated: root.power.cycleProfile(1)
+    }
+  }
+
+  Component {
+    id: todoComponent
+    TodoTile {
+      activatable: !root.arrangeable || parent.selected
+      width: parent.width
+      height: root.side
+      radius: root.settings.tileRadius
+      backgroundOpacity: root.settings.opacity
+      selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
+      todos: root.todos
+      config: root.settings
     }
   }
 

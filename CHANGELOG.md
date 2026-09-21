@@ -4,6 +4,48 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.5.0] — 2026-09-21
+
+### Added
+
+- **A to-do card with a Pomodoro clock.** The two share a card because they are
+  one activity: you run a focus round *at* something. Focus is 25 minutes, the
+  short break 5 and the long break 15, with a long break every fourth round, and
+  all four are settings. A finished phase starts the next one and sounds an
+  alarm — a chime from the freedesktop sound theme plus a desktop notification;
+  a phase you skip into waits for you.
+
+  Each to-do can carry a deadline, and its colour says how close that is: blue
+  beyond a day, orange within a day, red within two hours or past it, green when
+  done. These are the only fixed colours in the plugin — urgency is information,
+  and information that changed meaning with the wallpaper would be a trap — and
+  the words beside the stripe say the same thing, so colour is never the only
+  signal. To-dos can be archived one at a time or all at once, and brought back.
+
+  The list lives in `$XDG_STATE_HOME/omawidgets/todos.json`, the plugin's own
+  directory, and is parsed as defensively as everything else the plugin reads.
+  Adding needs a keyboard, which the desktop layer deliberately never takes, so
+  it happens in the bar popup or the overlay and the desktop card is where
+  things get ticked off.
+- `addTodo`, `todos`, `pomodoro`, `startPomodoro` and `skipPhase` over IPC.
+
+### Changed
+
+- **The card list in the bar popup is a dropdown.** Six widgets of switches was
+  most of the popup's height, and the list only grows. Turning one on keeps the
+  order a drag established rather than resetting it.
+- The Pomodoro durations and the number of to-do rows are in the popup, shown
+  only when the card that uses them is switched on. The popup's layout controls
+  moved into their own section along the way.
+
+### Reverted
+
+- **The AirPods marks are back to the previous drawing.** The single-path
+  version was meant to union the housing and the stem without a seam, and side
+  by side it was a wash at card size and worse at thirty pixels, where its
+  thinner stem started to disappear. Reverted rather than kept for the sake of
+  having changed it.
+
 ## [1.4.0] — 2026-09-21
 
 ### Added

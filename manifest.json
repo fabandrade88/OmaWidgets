@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.fabandrade88.omawidgets",
   "name": "OmaWidgets",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "Fabricio Oliveira de Andrade",
   "license": "MIT",
-  "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, now playing with transport controls, AirPods battery, battery status, and a one-click power profile switch. A compact mode turns them into small rounded tiles. Themed entirely from the active Omarchy theme.",
+  "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, now playing with transport controls, a to-do list with a Pomodoro timer, AirPods battery, battery status, and a one-click power profile switch. Drag them into place, and switch to compact rounded tiles. Themed entirely from the active Omarchy theme.",
   "kinds": [
     "service",
     "bar-widget",
@@ -18,7 +18,7 @@
   },
   "barWidget": {
     "displayName": "OmaWidgets",
-    "description": "macOS-style desktop cards for performance, media, AirPods, battery and power profile, with a compact rounded-tile mode.",
+    "description": "macOS-style desktop cards for performance, media, to-dos and Pomodoro, AirPods, battery and power profile, with a compact rounded-tile mode.",
     "category": "System",
     "allowMultiple": false,
     "defaultSection": "right",
@@ -36,6 +36,7 @@
       "cards": [
         "system",
         "media",
+        "todo",
         "pods",
         "battery",
         "power"
@@ -47,7 +48,12 @@
       "tileSize": 132,
       "tileRadius": 18,
       "albumArt": true,
-      "preferredPlayer": ""
+      "preferredPlayer": "",
+      "focusMinutes": 25,
+      "shortBreakMinutes": 5,
+      "longBreakMinutes": 15,
+      "longBreakEvery": 4,
+      "todoRows": 5
     },
     "schema": [
       {
@@ -68,8 +74,8 @@
         "key": "cards",
         "type": "string",
         "label": "Cards to show, in order",
-        "description": "Any of system, media, pods, battery, power.",
-        "defaultValue": "system,media,pods,battery,power"
+        "description": "Any of system, media, todo, pods, battery, power. Also the order they sit in.",
+        "defaultValue": "system,media,todo,pods,battery,power"
       },
       {
         "key": "columns",
@@ -175,6 +181,41 @@
         "label": "Preferred media player",
         "description": "Matched against the player's name, for example 'spotify'. Leave empty to follow whatever is playing.",
         "defaultValue": ""
+      },
+      {
+        "key": "focusMinutes",
+        "type": "number",
+        "label": "Pomodoro focus length in minutes",
+        "description": "1 to 180.",
+        "defaultValue": 25
+      },
+      {
+        "key": "shortBreakMinutes",
+        "type": "number",
+        "label": "Short break in minutes",
+        "description": "1 to 60.",
+        "defaultValue": 5
+      },
+      {
+        "key": "longBreakMinutes",
+        "type": "number",
+        "label": "Long break in minutes",
+        "description": "1 to 120.",
+        "defaultValue": 15
+      },
+      {
+        "key": "longBreakEvery",
+        "type": "number",
+        "label": "Focus rounds before a long break",
+        "description": "1 to 12.",
+        "defaultValue": 4
+      },
+      {
+        "key": "todoRows",
+        "type": "number",
+        "label": "To-dos listed on the card",
+        "description": "1 to 20. The rest are summarised as a count.",
+        "defaultValue": 5
       }
     ]
   }

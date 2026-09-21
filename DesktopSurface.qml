@@ -23,6 +23,7 @@ Item {
   required property var pods
   required property var power
   required property var media
+  required property var todos
   property var config: Settings.DEFAULTS
   property bool showCards: true
   property string selectedId: ""
@@ -103,6 +104,7 @@ Item {
         pods: root.pods
         power: root.power
         media: root.media
+        todos: root.todos
         config: root.config
         arrangeable: true
         selectedId: root.selectedId

@@ -15,6 +15,7 @@ Item {
   required property var pods
   required property var power
   required property var media
+  required property var todos
   property var config: Settings.DEFAULTS
   property bool arrangeable: false
   property string selectedId: ""
@@ -49,7 +50,7 @@ Item {
     id: cardsComponent
     CardColumn {
       system: root.system; gpuService: root.gpuService; pods: root.pods
-      power: root.power; media: root.media
+      power: root.power; media: root.media; todos: root.todos
       settings: root.settings; presence: root.presence
       arrangeable: root.arrangeable; selectedId: root.selectedId
       onProfileRequested: function (profile) { root.profileRequested(profile) }
@@ -63,7 +64,7 @@ Item {
     id: tilesComponent
     TileGrid {
       system: root.system; gpuService: root.gpuService; pods: root.pods
-      power: root.power; media: root.media
+      power: root.power; media: root.media; todos: root.todos
       settings: root.settings; presence: root.presence
       arrangeable: root.arrangeable; selectedId: root.selectedId
       onProfileRequested: function (profile) { root.profileRequested(profile) }

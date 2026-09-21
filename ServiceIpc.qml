@@ -45,6 +45,20 @@ Item {
     function nextTrack(): string { root.service.media.next(); return "ok" }
     function previousTrack(): string { root.service.media.previous(); return "ok" }
 
+    // The to-do list and the Pomodoro clock, for a keybind or a script.
+    function addTodo(text: string): string { return root.service.todos.add(text, 0) ? "ok" : "empty" }
+    function todos(): string {
+      var c = root.service.todos.counts
+      return c.open + " open\t" + c.done + " done\t" + c.archived + " archived"
+    }
+    function pomodoro(): string {
+      var t = root.service.todos
+      return (t.running ? "running" : "paused") + "\t" + t.phase + "\t" + t.remainingLabel
+    }
+    function startPomodoro(): string { root.service.todos.toggleRunning(); return root.service.todos.running ? "running" : "paused" }
+    function skipPhase(): string { root.service.todos.skip(); return root.service.todos.phase }
+    function testAlarm(): string { root.service.todos.alarm("focus"); return "ok" }
+
     // Reads the current profile, and sets it only through the allowlisted path.
     function profile(): string { return root.service.power.activeProfile }
     function setProfile(name: string): string { return root.service.setProfile(name) ? "ok" : "rejected" }

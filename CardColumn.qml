@@ -10,6 +10,7 @@ PackedLayout {
   required property var pods
   required property var power
   required property var media
+  required property var todos
   property var settings: null
   property var presence: Layout.defaultState()
 
@@ -34,6 +35,7 @@ PackedLayout {
         if (cardId === Layout.CARD_BATTERY) return batteryComponent
         if (cardId === Layout.CARD_POWER) return powerComponent
         if (cardId === Layout.CARD_MEDIA) return mediaComponent
+        if (cardId === Layout.CARD_TODO) return todoComponent
         return null
       }
     }
@@ -74,6 +76,18 @@ PackedLayout {
       onCloseRequested: root.hideRequested(parent.cardId)
       power: root.power; config: root.settings
       onProfileRequested: function (profile) { root.profileRequested(profile) } }
+  }
+
+  Component {
+    id: todoComponent
+    TodoCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
+      selected: parent.selected
+      closable: root.arrangeable
+      onCloseRequested: root.hideRequested(parent.cardId)
+      todos: root.todos; config: root.settings
+      // The desktop layer never takes the keyboard, so adding is offered where
+      // one is available: the overlay and the bar popup.
+      editable: !root.arrangeable }
   }
 
   Component {

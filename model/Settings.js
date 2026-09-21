@@ -11,10 +11,11 @@ var CARD_PODS = "pods"
 var CARD_BATTERY = "battery"
 var CARD_POWER = "power"
 var CARD_MEDIA = "media"
+var CARD_TODO = "todo"
 
 // Also the canonical order: a card toggled off and back on returns to its
 // place here rather than to the end of the list.
-var KNOWN_CARDS = [CARD_SYSTEM, CARD_MEDIA, CARD_PODS, CARD_BATTERY, CARD_POWER]
+var KNOWN_CARDS = [CARD_SYSTEM, CARD_MEDIA, CARD_TODO, CARD_PODS, CARD_BATTERY, CARD_POWER]
 
 // Kept in step with Layout.POSITIONS by tests/input.test.js. Duplicated rather
 // than imported because a QML `.import` would stop `node` loading this file.
@@ -30,6 +31,7 @@ CARD_NAMES[CARD_PODS] = "AirPods"
 CARD_NAMES[CARD_BATTERY] = "Battery"
 CARD_NAMES[CARD_POWER] = "Power profile"
 CARD_NAMES[CARD_MEDIA] = "Now playing"
+CARD_NAMES[CARD_TODO] = "To-do"
 
 var DEFAULTS = {
   desktop: true,
@@ -54,7 +56,13 @@ var DEFAULTS = {
   // visual idea of compact mode.
   tileRadius: 18,
   albumArt: true,
-  preferredPlayer: ""
+  preferredPlayer: "",
+  // The Pomodoro cycle. 25/5/15 is a convention, not a law.
+  focusMinutes: 25,
+  shortBreakMinutes: 5,
+  longBreakMinutes: 15,
+  longBreakEvery: 4,
+  todoRows: 5
 }
 
 function bool(value, fallback) {
@@ -137,7 +145,12 @@ function normalize(raw) {
     albumArt: bool(source.albumArt, DEFAULTS.albumArt),
     // Matched against the player's identity, D-Bus name or desktop entry, and
     // never used as anything but a substring comparison.
-    preferredPlayer: monitorName(source.preferredPlayer)
+    preferredPlayer: monitorName(source.preferredPlayer),
+    focusMinutes: int(source.focusMinutes, DEFAULTS.focusMinutes, 1, 180),
+    shortBreakMinutes: int(source.shortBreakMinutes, DEFAULTS.shortBreakMinutes, 1, 60),
+    longBreakMinutes: int(source.longBreakMinutes, DEFAULTS.longBreakMinutes, 1, 120),
+    longBreakEvery: int(source.longBreakEvery, DEFAULTS.longBreakEvery, 1, 12),
+    todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20)
   }
 }
 
@@ -168,6 +181,7 @@ if (typeof module !== "undefined") {
   module.exports = {
     CARD_SYSTEM: CARD_SYSTEM, CARD_PODS: CARD_PODS,
     CARD_BATTERY: CARD_BATTERY, CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA,
+    CARD_TODO: CARD_TODO,
     KNOWN_CARDS: KNOWN_CARDS,
     POSITIONS: POSITIONS,
     DEFAULTS: DEFAULTS,

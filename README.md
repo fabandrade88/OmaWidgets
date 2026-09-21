@@ -2,8 +2,9 @@
 
 <p align="center">
   Desktop widget cards for Omarchy, in the spirit of the macOS desktop.<br>
-  CPU, memory and GPU. Now playing. AirPods battery. Battery. Power profile, one click.<br>
-  Or the same readings as small rounded tiles.
+  CPU, memory and GPU. Now playing. To-dos with a Pomodoro clock.<br>
+  AirPods battery. Battery. Power profile, one click.<br>
+  Drag them where you want them, or switch to small rounded tiles.
 </p>
 
 <p align="center">
@@ -96,6 +97,44 @@ the track on the full card.
 
 Control is native: Quickshell speaks MPRIS directly, so skipping a track costs
 one D-Bus call, not a subprocess.
+
+### To-do, with a Pomodoro clock
+
+The two are one card because they are one activity: you run a focus round *at*
+something. The clock is on top — a ring that fills as the phase runs, because a
+ring draining to nothing looks like a failure state at a glance — and the list
+is under it, sorted by how nearly late each item is.
+
+Focus is 25 minutes, the short break 5, the long break 15, and a long break
+arrives every fourth focus round. All four are settings, because that is a
+convention rather than a law. When a phase ends the next one starts on its own
+and an alarm sounds: a chime from the freedesktop sound theme, and a desktop
+notification. A phase you skip into waits for you to start it.
+
+Each to-do can have a deadline, and its colour says how close that is:
+
+| | |
+|---|---|
+| **Blue** | More than a day out |
+| **Orange** | Within a day |
+| **Red** | Within two hours, or past it |
+| **Green** | Done |
+
+These four are the only fixed colours in the plugin — everything else is themed.
+Urgency is information, and information that changed meaning with the wallpaper
+would be a trap. The words next to the stripe say the same thing, so the colour
+is never the only signal. The card's own accent follows the most pressing
+deadline in it, so a glance at the desktop says whether anything needs you.
+
+Done to-dos can be archived one at a time or all at once, and brought back from
+the archive later. The list lives in
+`$XDG_STATE_HOME/omawidgets/todos.json` — see
+[Running someone else's code](#running-someone-elses-code).
+
+Adding a to-do needs a keyboard, and the desktop layer deliberately never takes
+one — that is what stops a desktop widget stealing keys from the window you are
+working in. So new to-dos are added from the bar popup or the summoned overlay,
+and the desktop card is where you tick them off.
 
 ### AirPods
 
@@ -250,6 +289,12 @@ omarchy-shell omawidgets deselect
 omarchy-shell omawidgets hideSelected         # prints what it hid, or "nothing selected"
 omarchy-shell omawidgets moveSelectedForward  # reorder from the keyboard
 omarchy-shell omawidgets moveSelectedBack
+
+omarchy-shell omawidgets addTodo "Ship the plugin"   # no deadline; set one in the card
+omarchy-shell omawidgets todos                       # "3 open  1 done  2 archived"
+omarchy-shell omawidgets pomodoro                    # "running  focus  18:42"
+omarchy-shell omawidgets startPomodoro               # start or pause
+omarchy-shell omawidgets skipPhase
 ```
 
 `position` takes any of the eight names in the table below. An unknown one
@@ -266,7 +311,12 @@ typo costs you one setting rather than the widget.
 |---|---|---|
 | `desktop` | `true` | Draw the cards on the desktop |
 | `position` | `top-right` | `top-left`, `top-center`, `top-right`, `middle-left`, `middle-right`, `bottom-left`, `bottom-center`, `bottom-right`. Margins are measured from the usable area, so the cards clear the bar whichever edge it is on |
-| `cards` | all five | Any of `system`, `media`, `pods`, `battery`, `power`, in the order you want them |
+| `cards` | all six | Any of `system`, `media`, `todo`, `pods`, `battery`, `power`, in the order you want them |
+| `focusMinutes` | `25` | 1–180 |
+| `shortBreakMinutes` | `5` | 1–60 |
+| `longBreakMinutes` | `15` | 1–120 |
+| `longBreakEvery` | `4` | 1–12 focus rounds before the long break |
+| `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
 | `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay always spreads them across one row |
 | `cards` order | — | Also the order on the desktop. Dragging a widget rewrites it |
 | `cardWidth` | `268` | 180–520 pixels |
@@ -326,8 +376,10 @@ permissions. That is true of this one too, so here is exactly what it does.
 sensors, the GPU's sysfs nodes, the battery's cycle count, the librepods status
 file, and MPRIS metadata over the session bus. All of it read-only.
 
-**It writes two things, both of them yours.** Playback, when you press a
-transport button — a `Next`, `Previous` or `PlayPause` call to the player you are
+**It writes three things, all of them yours.** Its own to-do list, at
+`$XDG_STATE_HOME/omawidgets/todos.json` — the plugin's own directory, created on
+first run, never `shell.json`, which belongs to the bar. Playback, when you press
+a transport button — a `Next`, `Previous` or `PlayPause` call to the player you are
 already listening to, and only when that player reports it supports it. And the
 power profile, and only through Omarchy's own
 `omarchy-powerprofiles-set`. The profile name passes two gates before it reaches
@@ -355,7 +407,8 @@ leaving this on adds no exposure your shell did not already have.
 
 **It treats every input as hostile.** Everything it reads is text written by
 another process — a kernel that renamed a field, a daemon caught mid-write, a
-`shell.json` edited by hand, an AirPods name chosen on someone's phone. Each one
+`shell.json` edited by hand, an AirPods name chosen on someone's phone, its own
+to-do file after someone edited it. Each one
 goes through a typed parser that clamps ranges, strips control characters, caps
 lengths, and falls back rather than throwing. Device names are rendered as
 `Text.PlainText` and never interpreted.
@@ -400,6 +453,7 @@ GpuService.qml       GPU, from sysfs or nvidia-smi
 PodsService.qml      AirPods, from an inotify watch — no timer
 PowerService.qml     UPower, and the power profile
 MediaService.qml     MPRIS: player selection and transport
+TodoService.qml      the to-do file, the Pomodoro countdown, and the alarm
 HardwareProbe.qml    runs scripts/omawidgets-probe once per session
 
 DesktopSurface.qml   layer-shell windows on WlrLayer.Bottom, one per screen
@@ -410,7 +464,8 @@ PackedLayout.qml     places, selects and drags; CardColumn.qml and TileGrid.qml
 Arranger.qml         the selection, and what hiding or dragging asks for
 
 SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
-Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml  CloseButton.qml
+Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml  TodoTile.qml
+CloseButton.qml  PomodoroDial.qml  TodoRow.qml  TodoComposer.qml  TodoColors.qml
 IconRing.qml  MetricGauge.qml  PodGauge.qml  PodMark.qml  MediaControls.qml
 MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
 PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml
@@ -420,6 +475,9 @@ model/Media.js       MPRIS player selection and track presentation
 model/Layout.js      which widgets are worth drawing, and how wide each tile is
 model/Pack.js        column packing, including two-column items
 model/Arrange.js     selecting, hiding and reordering
+model/Todo.js        the to-do file format
+model/TodoList.js    list operations, and how close a deadline is
+model/Pomodoro.js    the focus and break cycle
 model/Gpu.js         one shape from three driver families
 model/Pods.js        the librepods status file, defensively
 model/Power.js       battery presentation, and the profile allowlist
@@ -446,9 +504,13 @@ stops being: a file that outgrows the limit is doing more than one job.
   three driver families, bounded history.
 - **`input.test.js`** — the paths where being wrong has consequences: the power
   profile allowlist, truncated and hostile librepods JSON, hand-edited settings.
-- **`layout.test.js`** — card and tile arrangement, window anchoring, and which
-  player the media card should follow, including the QML-list case that is
-  indexable but is not a JavaScript `Array`.
+- **`layout.test.js`** — card and tile arrangement, window anchoring, and column
+  packing including two-column items.
+- **`arrange.test.js`** — selecting, hiding and reordering, and which player the
+  media card should follow, including the QML-list case that is indexable but is
+  not a JavaScript `Array`.
+- **`todo.test.js`** — the to-do file in both directions, deadline urgency, and
+  the Pomodoro cycle.
 - **`glyphs.test.js`** — every Nerd Font glyph in the source, against the font
   the bar actually uses. It catches both a codepoint the font lacks and a
   malformed surrogate pair, which is not one character at all and looks like a

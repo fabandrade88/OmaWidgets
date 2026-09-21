@@ -60,6 +60,7 @@ Item {
   readonly property alias pods: podsService
   readonly property alias power: powerService
   readonly property alias media: mediaService
+  readonly property alias todos: todoService
 
   readonly property alias arranger: arranger
 
@@ -124,6 +125,12 @@ Item {
     presence: ({ hasPods: podsService.hasBattery, hasMedia: mediaService.hasMedia })
   }
 
+  TodoService {
+    id: todoService
+    config: root.config
+    active: root.sampling
+  }
+
   MediaService {
     id: mediaService
     active: root.sampling
@@ -141,6 +148,7 @@ Item {
     pods: podsService
     power: powerService
     media: mediaService
+    todos: todoService
     config: root.config
     showCards: root.config.desktop
     selectedId: arranger.selectedCard
