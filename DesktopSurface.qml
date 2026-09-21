@@ -33,6 +33,13 @@ Item {
   signal orderRequested(var ids)
   signal hideRequested(string id)
 
+  // The desktop layer refuses the keyboard by default — that is what stops a
+  // desktop widget stealing keys from the window you are working in. It asks for
+  // it only while something on it is being typed into, and gives it straight
+  // back. OnDemand rather than Exclusive, so the compositor hands focus over on
+  // a click rather than seizing it.
+  property bool composing: false
+
   readonly property var placement: Layout.anchorsFor(config.position)
 
   // An empty `monitor` setting means every screen. A name that matches nothing
@@ -63,7 +70,8 @@ Item {
       WlrLayershell.layer: WlrLayer.Bottom
       // The cards are clickable but never take the keyboard: a desktop widget
       // that stole focus from the focused window would be a bug, not a feature.
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+      WlrLayershell.keyboardFocus: root.composing
+        ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
       // Reserve no space of our own, but respect everyone else's.
       //
       // ExclusionMode.Ignore sets a layer-shell exclusive zone of -1, which asks
@@ -112,6 +120,7 @@ Item {
         onSelectRequested: function (id) { root.selectRequested(id) }
         onOrderRequested: function (ids) { root.orderRequested(ids) }
         onHideRequested: function (id) { root.hideRequested(id) }
+        onComposingChanged: function (active) { root.composing = active }
       }
     }
   }

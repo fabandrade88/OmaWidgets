@@ -4,6 +4,35 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.5.1] — 2026-09-21
+
+### Fixed
+
+- **Switching cards on and off did nothing.** Splitting the popup into sections
+  cut at the wrong boundary, so the card list ended up inside the Layout section
+  and emitted a signal nothing was connected to. It rendered, and it did not
+  work. It is now a folding section of switches, wired to the same ordering rule
+  as before.
+- **There was no way to add a to-do from the card you were looking at.** The
+  composer only appeared where a keyboard was already available — the overlay
+  and the bar popup — which is not where anyone looks for it. The desktop card
+  now has a **+** button that opens the composer and asks the compositor for the
+  keyboard, and gives it back when the composer closes. The layer still refuses
+  the keyboard the rest of the time, which is what keeps a desktop widget from
+  stealing keys from the window you are working in.
+- **The compact to-do tile had a pause glyph floating in a corner.** The clock
+  and its running state now sit inside the ring, the way the card's dial reads.
+  A tile whose mark is a picture rather than a number was also drawing nothing
+  at all: the content was hidden unless there was a glyph or a value, and this
+  one has neither.
+
+### Changed
+
+- **The popup's long sections fold.** Cards, Layout, and To-do and Pomodoro each
+  collapse to a title and a summary of what they are set to, with a chevron that
+  turns. Six widgets of switches plus five Pomodoro steppers was most of the
+  popup's height.
+
 ## [1.5.0] — 2026-09-21
 
 ### Added

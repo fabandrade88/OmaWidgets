@@ -15,6 +15,11 @@ Column {
   property bool busy: false
 
   signal submitted(string text, real deadline)
+  signal dismissed()
+
+  // Focused as soon as it appears, so asking to add a to-do puts the cursor
+  // where the to-do goes.
+  onVisibleChanged: if (visible) textField.forceActiveFocus()
 
   // Parsed from the two fields rather than a date picker: a picker is a lot of
   // widget for something most to-dos do not have at all.
@@ -46,6 +51,7 @@ Column {
     placeholderText: "Add a to-do"
     foreground: Color.popups.text
     onAccepted: root.submit()
+    Keys.onEscapePressed: root.dismissed()
   }
 
   Row {

@@ -1,6 +1,5 @@
 import QtQuick
 import qs.Commons
-import qs.Ui
 
 // The Pomodoro durations. 25/5/15 every four rounds is the convention this
 // starts from, and all four are editable because it is a convention.
@@ -14,12 +13,6 @@ Column {
   readonly property color foreground: Color.popups.text
 
   spacing: Style.spacing.md
-
-  PanelSectionHeader {
-    width: parent.width
-    text: "Pomodoro"
-    foreground: root.foreground
-  }
 
   StepperRow {
     width: parent.width

@@ -131,10 +131,16 @@ the archive later. The list lives in
 `$XDG_STATE_HOME/omawidgets/todos.json` — see
 [Running someone else's code](#running-someone-elses-code).
 
-Adding a to-do needs a keyboard, and the desktop layer deliberately never takes
-one — that is what stops a desktop widget stealing keys from the window you are
-working in. So new to-dos are added from the bar popup or the summoned overlay,
-and the desktop card is where you tick them off.
+Adding a to-do needs a keyboard, and the desktop layer refuses one by default —
+that is what stops a desktop widget stealing keys from the window you are working
+in. So the desktop card has a **+** button: pressing it opens the composer *and*
+asks the compositor for the keyboard, and closing it gives the keyboard straight
+back. The overlay and the bar popup already have one, so there the composer is
+simply there.
+
+Type the to-do, and optionally a date as `2026-09-30` and a time as `18:00`.
+Leave the time out and it is due at the end of that day; leave the date out and
+it has no deadline at all. `Escape` closes the composer.
 
 ### AirPods
 
@@ -225,8 +231,11 @@ cards are hidden.
   <img src="docs/settings-popup.png" alt="The settings popup" width="280">
 </p>
 
-The popup holds everything: the desktop toggle, compact mode, per-core bars, a
-3×3 picker for where the cards sit, which cards to show, and the power profile.
+The popup holds everything: the desktop toggle, compact mode, per-core bars, the
+power profile, and three folding sections — **Cards** (a switch each), **Layout**
+(a 3×3 position picker, columns, tile size) and **To-do and Pomodoro** (the four
+durations and how many rows the card lists). Folded, each one shows a summary of
+what it is set to, so the panel stays short without hiding what it is doing.
 Changes are written to `~/.config/omarchy/shell.json` as you make them.
 
 ## Arranging the desktop
@@ -466,6 +475,8 @@ Arranger.qml         the selection, and what hiding or dragging asks for
 SystemCard.qml  MediaCard.qml  PodsCard.qml  BatteryCard.qml  PowerCard.qml
 Card.qml  Tile.qml  SystemTile.qml  MediaTile.qml  PodsTile.qml  TodoTile.qml
 CloseButton.qml  PomodoroDial.qml  TodoRow.qml  TodoComposer.qml  TodoColors.qml
+SettingsPanel.qml  ExpanderSection.qml  CardsSection.qml  LayoutSettings.qml
+TodoSettings.qml
 IconRing.qml  MetricGauge.qml  PodGauge.qml  PodMark.qml  MediaControls.qml
 MetricRow.qml  MeterBar.qml  RingGauge.qml  HistoryGraph.qml  CoreBars.qml
 PodPill.qml  ProfileSelector.qml  ToggleRow.qml  StepperRow.qml  PositionGrid.qml

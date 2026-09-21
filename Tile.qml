@@ -60,7 +60,10 @@ BorderSurface {
     anchors.centerIn: parent
     width: parent.width - root.contentLeftInset - root.contentRightInset
     spacing: Style.spacing.xs
-    visible: root.glyph !== "" || root.value !== ""
+    // A tile whose mark is a picture has neither glyph nor value, so neither
+    // alone can decide whether there is anything to show.
+    visible: root.artwork !== null || root.glyph !== "" || root.value !== ""
+      || root.caption !== "" || root.fraction >= 0
 
     Item {
       id: mark

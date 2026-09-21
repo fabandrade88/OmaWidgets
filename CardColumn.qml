@@ -85,9 +85,11 @@ PackedLayout {
       closable: root.arrangeable
       onCloseRequested: root.hideRequested(parent.cardId)
       todos: root.todos; config: root.settings
-      // The desktop layer never takes the keyboard, so adding is offered where
-      // one is available: the overlay and the bar popup.
-      editable: !root.arrangeable }
+      // The overlay and the popup already have a keyboard, so the composer is
+      // simply there. The desktop asks first — see DesktopSurface.
+      editable: !root.arrangeable
+      requestable: root.arrangeable
+      onComposingChanged: function (active) { root.composingChanged(active) } }
   }
 
   Component {

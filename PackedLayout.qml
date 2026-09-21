@@ -27,6 +27,9 @@ Item {
   signal selectRequested(string id)
   signal orderRequested(var ids)
   signal hideRequested(string id)
+  // Raised when a widget needs the keyboard, which a desktop surface must ask
+  // the compositor for before anything can be typed into it.
+  signal composingChanged(bool active)
 
   // Visual order. Held separately from `ids` so a drag can reorder without
   // changing the Repeater's model, which would tear down and rebuild the cards

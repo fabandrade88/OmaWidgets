@@ -16,8 +16,19 @@ Card {
   property var config: ({})
   // Adding needs a keyboard, and the desktop layer never takes one. True in the
   // overlay and the bar popup, false on the desktop.
+  // Where a keyboard is already available — the overlay and the bar popup — the
+  // composer is simply shown. On the desktop it is behind a button, because
+  // showing it there means taking the keyboard from the window you are using.
   property bool editable: false
+  property bool requestable: false
   property bool showArchive: false
+  property bool composerOpen: false
+
+  signal composingChanged(bool active)
+
+  onComposerOpenChanged: root.composingChanged(composerOpen)
+
+  readonly property bool composerVisible: (editable || composerOpen) && !showArchive
 
   readonly property var counts: todos ? todos.counts : ({ open: 0, done: 0, total: 0, archived: 0 })
   readonly property string worst: todos ? todos.worstUrgency : TodoList.NONE
@@ -87,10 +98,22 @@ Card {
     }
   }
 
+  // On the desktop, asking to add is what hands the surface a keyboard.
+  PanelActionButton {
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: root.requestable && !root.editable && !root.composerOpen && !root.showArchive
+    iconText: "󰐕"
+    tooltipText: "Add a to-do"
+    foreground: root.foreground
+    bordered: true
+    onClicked: root.composerOpen = true
+  }
+
   TodoComposer {
     width: parent.width
-    visible: root.editable && !root.showArchive
+    visible: root.composerVisible
     onSubmitted: function (text, deadline) { if (root.todos) root.todos.add(text, deadline) }
+    onDismissed: root.composerOpen = false
   }
 
   Row {

@@ -1,9 +1,7 @@
 import QtQuick
 import qs.Commons
-import qs.Ui
 
-// Where the widgets sit and how big they are, split out of the popup so each
-// section of it reads as a section.
+// Where the widgets sit and how big they are.
 Column {
   id: root
 
@@ -17,29 +15,34 @@ Column {
 
   spacing: Style.spacing.md
 
-  PanelSectionHeader {
-    width: parent.width
-    text: "Position"
-    foreground: root.foreground
-  }
-
   PositionGrid {
     anchors.horizontalCenter: parent.horizontalCenter
     position: root.config.position
     onPicked: function (value) { root.positionPicked(value) }
   }
 
-  PanelSeparator { width: parent.width }
-
-  // A dropdown rather than a row of switches: five widgets is already most of
-  // the popup's height, and the list only grows.
-  MultiSelect {
+  StepperRow {
     width: parent.width
-    label: "Cards"
-    foreground: root.foreground
-    noSelectionText: "None"
-    options: root.cardOptions
-    values: root.config.cards
-    onChanged: function (values) { root.cardsPicked(values) }
+    label: "Columns"
+    description: root.config.compact
+      ? "Tiles across before wrapping to the next row."
+      : "Cards across before wrapping to the next row."
+    value: root.config.columns
+    minimum: 1
+    maximum: 6
+    onChanged: function (value) { root.columnsChanged(value) }
+  }
+
+  StepperRow {
+    width: parent.width
+    visible: root.config.compact
+    label: "Tile size"
+    description: "Tiles are square, so one number sizes them."
+    value: root.config.tileSize
+    minimum: 88
+    maximum: 260
+    step: 4
+    suffix: "px"
+    onChanged: function (value) { root.tileSizeChanged(value) }
   }
 }

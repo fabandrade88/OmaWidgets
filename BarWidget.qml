@@ -166,8 +166,14 @@ Panel {
           onDesktopToggled: root.toggleDesktop()
           onCompactToggled: root.write({ compact: !root.config.compact })
           onCoreBarsToggled: root.write({ showCoreBars: !root.config.showCoreBars })
-          onCardsPicked: function (cards) {
-            root.write({ cards: Arrange.applySelection(root.config.cards, cards, Settings.KNOWN_CARDS) })
+          // A switch in the folding Cards section. The chosen set goes through
+          // applySelection so turning one on keeps the order a drag established.
+          onCardToggled: function (card) {
+            var chosen = root.config.cards.slice()
+            var at = chosen.indexOf(card)
+            if (at === -1) chosen.push(card)
+            else chosen.splice(at, 1)
+            root.write({ cards: Arrange.applySelection(root.config.cards, chosen, Settings.KNOWN_CARDS) })
           }
           onPositionPicked: function (position) { root.setPosition(position) }
           onOverlayRequested: root.openOverlay()

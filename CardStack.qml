@@ -24,6 +24,7 @@ Item {
   signal selectRequested(string id)
   signal orderRequested(var ids)
   signal hideRequested(string id)
+  signal composingChanged(bool active)
 
   // Normalised on the way in, so a caller that is still being constructed (or a
   // hand-edited shell.json) yields the defaults rather than a broken binding.
@@ -57,6 +58,7 @@ Item {
       onSelectRequested: function (id) { root.selectRequested(id) }
       onOrderRequested: function (ids) { root.orderRequested(ids) }
       onHideRequested: function (id) { root.hideRequested(id) }
+      onComposingChanged: function (active) { root.composingChanged(active) }
     }
   }
 
@@ -71,6 +73,7 @@ Item {
       onSelectRequested: function (id) { root.selectRequested(id) }
       onOrderRequested: function (ids) { root.orderRequested(ids) }
       onHideRequested: function (id) { root.hideRequested(id) }
+      onComposingChanged: function (active) { root.composingChanged(active) }
     }
   }
 }

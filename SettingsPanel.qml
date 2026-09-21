@@ -25,17 +25,7 @@ Column {
   signal profileRequested(string profile)
   signal columnsChanged(int columns)
   signal tileSizeChanged(int size)
-  signal cardsPicked(var cards)
   signal settingChanged(string key, int value)
-
-  readonly property var cardOptions: {
-    var out = []
-    for (var i = 0; i < Settings.KNOWN_CARDS.length; i++) {
-      var id = Settings.KNOWN_CARDS[i]
-      out.push({ value: id, label: Settings.cardName(id) })
-    }
-    return out
-  }
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -77,63 +67,51 @@ Column {
     onToggled: root.compactToggled()
   }
 
-  StepperRow {
-    width: parent.width
-    label: "Columns"
-    description: root.config.compact
-      ? "Tiles across before wrapping to the next row."
-      : "Cards across before wrapping to the next row."
-    value: root.config.columns
-    minimum: 1
-    maximum: 6
-    onChanged: function (value) { root.columnsChanged(value) }
-  }
-
-  StepperRow {
-    width: parent.width
-    visible: root.config.compact
-    label: "Tile size"
-    description: "Tiles are square, so one number sizes them."
-    value: root.config.tileSize
-    minimum: 88
-    maximum: 260
-    step: 4
-    suffix: "px"
-    onChanged: function (value) { root.tileSizeChanged(value) }
-  }
-
   ToggleRow {
     width: parent.width
     visible: !root.config.compact
     label: "Per-core bars"
-    description: "One bar per CPU thread on the performance card. Full cards only."
+    description: "One bar per CPU thread on the performance card."
     checked: root.config.showCoreBars
-    interactive: !root.config.compact
     onToggled: root.coreBarsToggled()
   }
 
   PanelSeparator { width: parent.width }
 
-  LayoutSettings {
+  CardsSection {
     width: parent.width
     config: root.config
-    onPositionPicked: function (value) { root.positionPicked(value) }
-    onColumnsChanged: function (value) { root.columnsChanged(value) }
-    onTileSizeChanged: function (value) { root.tileSizeChanged(value) }
+    onCardToggled: function (card) { root.cardToggled(card) }
   }
 
-  PanelSeparator {
+  ExpanderSection {
     width: parent.width
-    visible: todoSettings.visible
+    title: "Layout"
+    summary: root.config.position + " \u00b7 " + root.config.columns
+      + (root.config.columns === 1 ? " column" : " columns")
+
+    LayoutSettings {
+      width: parent.width
+      config: root.config
+      onPositionPicked: function (value) { root.positionPicked(value) }
+      onColumnsChanged: function (value) { root.columnsChanged(value) }
+      onTileSizeChanged: function (value) { root.tileSizeChanged(value) }
+    }
   }
 
-  TodoSettings {
-    id: todoSettings
+  ExpanderSection {
     width: parent.width
     // Only worth the space when the card that uses it is switched on.
     visible: root.config.cards.indexOf(Settings.CARD_TODO) !== -1
-    config: root.config
-    onTimingChanged: function (key, value) { root.settingChanged(key, value) }
+    title: "To-do and Pomodoro"
+    summary: root.config.focusMinutes + "m focus \u00b7 "
+      + root.config.shortBreakMinutes + "m / " + root.config.longBreakMinutes + "m breaks"
+
+    TodoSettings {
+      width: parent.width
+      config: root.config
+      onTimingChanged: function (key, value) { root.settingChanged(key, value) }
+    }
   }
 
   PanelSeparator {
