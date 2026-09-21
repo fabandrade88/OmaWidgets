@@ -39,10 +39,17 @@ Item {
     hasMedia: !!(media && media.hasMedia)
   }).length
 
+  // One row when the screen is wide enough for one, wrapped into further rows
+  // when it is not. `surface.width` is the whole screen, less a margin on each
+  // side so the outermost cards do not sit against the bezel.
+  readonly property int fittingColumns: Layout.columnsThatFit(
+    surface.width - 2 * baseSettings.marginX,
+    baseSettings.cardWidth, baseSettings.spacing, cardCount)
+
   readonly property var overlayConfig: {
     var merged = ({})
     for (var key in baseSettings) merged[key] = baseSettings[key]
-    merged.columns = Math.max(1, Math.min(6, cardCount))
+    merged.columns = fittingColumns
     // The overlay has the whole screen, so it always shows the full cards.
     merged.compact = false
     return merged

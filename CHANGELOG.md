@@ -4,6 +4,29 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.1] — 2026-09-21
+
+### Fixed
+
+- **The overlay drew its row wider than the screen.** It set one column per
+  card, so six full cards came to 1658px on a 1600px display and the outermost
+  two were clipped at the edges. It now takes as many columns as the screen
+  actually holds and wraps the rest onto a second row.
+- **A freshly started shell ignored the saved layout.** The bar host injects a
+  widget's settings after the widget is constructed, so the first push from
+  `Component.onCompleted` can carry nothing — and that empty object was stored
+  as though it were an answer, pinning the defaults until something wrote a
+  setting. An empty push is now ignored, and the host's own config snapshot
+  keeps answering until real settings arrive.
+
+### Documentation
+
+- README rewritten around screenshots taken on a running Omarchy desktop: the
+  cards in place, the summoned overlay, compact tiles, the to-do card, and the
+  settings popup folded and open. Adds a feature summary, the full
+  `omarchy plugin` lifecycle, and a note that `disable` drops a widget's
+  settings with its bar entry.
+
 ## [1.7.0] — 2026-09-21
 
 ### Security

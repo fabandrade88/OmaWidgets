@@ -39,8 +39,16 @@ Item {
 
   // Called by the bar widget whenever its injected settings change. Idempotent,
   // because one bar widget instance exists per monitor and each one pushes.
+  //
+  // An empty push is not an answer. The bar host injects `settings` after the
+  // widget is constructed, so the widget's first push — the one from
+  // Component.onCompleted — can carry nothing. Storing that pinned the defaults
+  // and left a freshly started shell drawing one column over the saved two,
+  // until some setting was written and a real push arrived.
   function applySettings(next) {
-    pushedSettings = next === undefined || next === null ? ({}) : next
+    if (next === undefined || next === null) return
+    if (Object.keys(next).length === 0) return
+    pushedSettings = next
   }
 
   // Set by the surfaces that are not the desktop layer, so a closed overlay and

@@ -65,6 +65,22 @@ function tileLabel(id) {
   return LABELS[String(id || "")] || ""
 }
 
+// How many cards of `cardWidth` fit side by side in `available` pixels, given
+// `spacing` between them. The overlay has the whole screen and wants one row,
+// but six full cards are wider than a 1600px display and a column count that
+// does not fit is drawn clipped at both edges rather than wrapped.
+//
+// Returns at least 1: one clipped card still beats none, and a surface that has
+// not been laid out yet reports a width of 0.
+function columnsThatFit(available, cardWidth, spacing, count) {
+  var total = Math.max(1, Number(count) || 1)
+  var width = Number(cardWidth)
+  var gap = Number(spacing) || 0
+  if (!(width > 0) || !(Number(available) > 0)) return total
+  var fits = Math.floor((Number(available) + gap) / (width + gap))
+  return Math.max(1, Math.min(total, fits))
+}
+
 // Which screen edges the desktop window anchors to. Anchoring to one edge only
 // is what makes layer-shell centre the surface along it, so the "-center" and
 // "middle-" positions are expressed by leaving the opposite pair unset rather
@@ -90,6 +106,7 @@ if (typeof module !== "undefined") {
     visibleCards: visibleCards,
     tileSpan: tileSpan,
     tileLabel: tileLabel,
+    columnsThatFit: columnsThatFit,
     anchorsFor: anchorsFor
   }
 }

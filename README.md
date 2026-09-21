@@ -8,13 +8,47 @@
 </p>
 
 <p align="center">
-  <img src="preview.png" alt="Four OmaWidgets cards on the Omarchy desktop" width="360">
+  <img src="docs/desktop.png" alt="Six OmaWidgets cards on the Omarchy desktop" width="820">
 </p>
 
 <p align="center">
   <em>Every colour, border, corner radius and type size comes from your active Omarchy theme.<br>
   Switch themes and the cards switch with the rest of the shell, in the same frame.</em>
 </p>
+
+<p align="center">
+  <img src="docs/theme.png" alt="The same cards under a different Omarchy theme" width="380">
+</p>
+
+<p align="center">
+  <em>The same cards, one theme switch later.</em>
+</p>
+
+```bash
+omarchy plugin add https://github.com/fabandrade88/OmaWidgets.git
+omarchy plugin enable io.github.fabandrade88.omawidgets --section right
+```
+
+<p align="center">
+  <em>Requires Omarchy 4.0 (Quattro) or newer. Full instructions, and how to remove it,
+  are under <a href="#install">Install</a>.</em>
+</p>
+
+## What you get
+
+| | |
+|---|---|
+| **Performance** | CPU load, package temperature, per-thread bars and recent history; memory and swap; GPU load, temperature and clock, with the honest answer when a driver does not expose one |
+| **Now playing** | Any MPRIS player, with cover art and working transport — previous, play/pause, next — and buttons that dim when the source cannot do them |
+| **To-do + Pomodoro** | A focus clock with configurable rounds and breaks, an alarm when a phase ends, and a list whose colours say how close each deadline is |
+| **AirPods** | Per-pod and case battery, charging and in-ear state, listening mode and case lid, read from the librepods daemon |
+| **Battery** | Level, what it is doing, how long that leaves, plus draw rate, health and cycle count |
+| **Power profile** | Saver, Balanced and Performance in one click, through Omarchy's own per-power-source setting |
+| **Two surfaces** | Cards on the desktop under your windows, and the same cards on a summoned full-screen overlay |
+| **Compact mode** | The whole set as small rounded tiles, one reading each |
+| **Arranging** | Click to select, drag to reorder, hover for an X to hide — or do all three from a keybind |
+| **Themed** | Every colour, border, corner and type size from the active Omarchy theme |
+| **Idle-free** | Nothing on screen means no timers: measurably indistinguishable from not installing it |
 
 ## Two ways to read them
 
@@ -60,6 +94,10 @@ needs. The summoned overlay always shows the full cards: it has the whole
 screen, so there is nothing to compact.
 
 ## The cards
+
+<p align="center">
+  <img src="docs/cards.png" alt="All six cards: performance, to-do, power profile, battery, now playing and AirPods" width="560">
+</p>
 
 ### Performance
 
@@ -125,6 +163,10 @@ Urgency is information, and information that changed meaning with the wallpaper
 would be a trap. The words next to the stripe say the same thing, so the colour
 is never the only signal. The card's own accent follows the most pressing
 deadline in it, so a glance at the desktop says whether anything needs you.
+
+<p align="center">
+  <img src="docs/todo.png" alt="The to-do card with a running Pomodoro round, and the compact tile beside it" width="560">
+</p>
 
 Done to-dos can be archived one at a time or all at once, and brought back from
 the archive later. The list lives in
@@ -210,18 +252,38 @@ you plug and unplug.
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/fabandrade88/omawidgets.git
+omarchy plugin add https://github.com/fabandrade88/OmaWidgets.git
 omarchy plugin enable io.github.fabandrade88.omawidgets --section right
 ```
 
 Plugins land disabled so you can read the code before you run it. That is worth
 doing — see [Running someone else's code](#running-someone-elses-code).
 
+`omarchy plugin add` clones it into `~/.config/omarchy/plugins/`, and
+`enable` adds the bar icon and starts the service. `--section right` puts the
+icon on the right of your bar; `left` and `center` work the same way.
+
+Updating and switching it off again:
+
+```bash
+omarchy plugin update io.github.fabandrade88.omawidgets    # pull the latest release
+omarchy plugin disable io.github.fabandrade88.omawidgets   # keep it installed, stop running it
+omarchy plugin list                                        # what is installed, and what is on
+```
+
 To remove it completely:
 
 ```bash
 omarchy plugin remove io.github.fabandrade88.omawidgets
 ```
+
+Removal takes the plugin folder and its bar entry with it. The to-do list is
+yours and stays behind, in `$XDG_STATE_HOME/omawidgets/todos.json`.
+
+> **`disable` forgets your settings.** Omarchy keeps a widget's settings on its
+> bar entry, and disabling removes that entry, so enabling again starts from the
+> defaults. To hide the cards without losing how you set them up, right-click
+> the bar icon — or use `omarchy-shell omawidgets-bar toggleDesktop`.
 
 ## Using it
 
@@ -237,7 +299,7 @@ cards are hidden.
 | **Escape** | Close the popup or the overlay |
 
 <p align="center">
-  <img src="docs/settings-popup.png" alt="The settings popup" width="280">
+  <img src="docs/settings.png" alt="The settings popup, folded and with every section open" width="720">
 </p>
 
 The popup holds everything: the desktop toggle, compact mode, per-core bars, the
@@ -337,7 +399,7 @@ typo costs you one setting rather than the widget.
 | `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
 | `dateFormat` | `dd-MM-yyyy` | Also `dd/MM/yyyy`, `yyyy-MM-dd`, `MM/dd/yyyy` |
 | `timeFormat` | `24h` | Or `12h` |
-| `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay always spreads them across one row |
+| `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay ignores this and fits as many as the screen holds, wrapping the rest onto a second row |
 | `cards` order | — | Also the order on the desktop. Dragging a widget rewrites it |
 | `cardWidth` | `268` | 180–520 pixels |
 | `spacing` | `10` | 0–48 pixels between cards |
@@ -482,8 +544,8 @@ once per session to find where your sensors live. It accepts no input, pins
 ## Hacking on it
 
 ```bash
-git clone https://github.com/fabandrade88/omawidgets.git
-cd omawidgets
+git clone https://github.com/fabandrade88/OmaWidgets.git
+cd OmaWidgets
 ./tests/run.sh              # manifest, model, QML, and the probe on this machine
 ./scripts/omawidgets-dev-install
 omarchy plugin enable io.github.fabandrade88.omawidgets --section right

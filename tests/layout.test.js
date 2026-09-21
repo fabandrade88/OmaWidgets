@@ -85,4 +85,14 @@ t.deep(Pack.move(["a", "b", "c"], 2, 0), ["c", "a", "b"], "in either direction")
 t.deep(Pack.move(["a", "b", "c"], 1, 1), ["a", "b", "c"], "moving onto itself changes nothing")
 t.deep(Pack.move(["a", "b", "c"], 9, 0), ["a", "b", "c"], "an index that is not there changes nothing")
 
+// The overlay wants one row, but only as many columns as the screen can hold.
+t.eq(Layout.columnsThatFit(1544, 268, 10, 6), 5,
+  "six full cards do not fit a 1600px screen; five do")
+t.eq(Layout.columnsThatFit(3784, 268, 10, 6), 6, "a wide screen takes the whole row")
+t.eq(Layout.columnsThatFit(0, 268, 10, 6), 6,
+  "a surface that has not been laid out yet falls back to one row")
+t.eq(Layout.columnsThatFit(100, 268, 10, 6), 1,
+  "a screen narrower than one card still draws one")
+t.eq(Layout.columnsThatFit(1544, 268, 10, 2), 2, "never more columns than there are cards")
+
 process.exit(t.report("layout"))
