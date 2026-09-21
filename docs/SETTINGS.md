@@ -68,6 +68,7 @@ omarchy-shell omawidgets todos                       # "3 open  1 done  2 archiv
 omarchy-shell omawidgets pomodoro                    # "running  focus  18:42"
 omarchy-shell omawidgets startPomodoro               # start or pause
 omarchy-shell omawidgets skipPhase
+omarchy-shell omawidgets startPhase short         # focus, short or long, by name
 ```
 
 `position` takes any of the eight names in the table below. An unknown one
@@ -90,6 +91,7 @@ typo costs you one setting rather than the widget.
 | `longBreakMinutes` | `15` | 1–120 |
 | `longBreakEvery` | `4` | 1–12 focus rounds before the long break |
 | `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
+| `autoAdvance` | `false` | Start the next phase by itself when one ends. Off, the alarm still sounds and the next phase waits to be started |
 | `dateFormat` | `dd-MM-yyyy` | Also `dd/MM/yyyy`, `yyyy-MM-dd`, `MM/dd/yyyy` |
 | `timeFormat` | `24h` | Or `12h` |
 | `columns` | `1`, or `2` in compact | 1–6 on the desktop. Widgets are packed shortest-first, so a short one never leaves a hole under it, and the compact Performance tile spans two columns. The overlay ignores this and fits as many as the screen holds, wrapping the rest onto a second row |

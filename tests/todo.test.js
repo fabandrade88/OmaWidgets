@@ -3,6 +3,7 @@ var t = require("./harness.js")
 var Todo = require("../model/Todo.js")
 var List = require("../model/TodoList.js")
 var Pomodoro = require("../model/Pomodoro.js")
+var Settings = require("../model/Settings.js")
 
 var NOW = 1789000000000
 var HOUR = 60 * 60 * 1000
@@ -128,5 +129,14 @@ t.eq(Pomodoro.progress(1500, 1500), 0, "a phase that has not started has filled 
 t.eq(Pomodoro.progress(0, 1500), 1, "one that has ended has filled the ring")
 t.eq(Pomodoro.progress(750, 1500), 0.5, "and halfway is half")
 t.eq(Pomodoro.progress(10, 0), -1, "with no duration there is no progress to show")
+
+// Chaining the rounds is opt-in: the setting exists, defaults to off, and only
+// an explicit true (or "true") turns it on.
+t.eq(Settings.normalize({}).autoAdvance, false, "a phase that ends waits for you by default")
+t.eq(Settings.normalize({ autoAdvance: true }).autoAdvance, true, "until it is asked to chain")
+t.eq(Settings.normalize({ autoAdvance: "true" }).autoAdvance, true,
+  "a hand-edited shell.json says true as a string")
+t.eq(Settings.normalize({ autoAdvance: "sometimes" }).autoAdvance, false,
+  "and anything else falls back to waiting")
 
 process.exit(t.report("todo"))

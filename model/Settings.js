@@ -63,6 +63,10 @@ var DEFAULTS = {
   longBreakMinutes: 15,
   longBreakEvery: 4,
   todoRows: 5,
+  // A phase that ends waits for you by default. Chaining rounds without asking
+  // is the thing a Pomodoro timer is most often criticised for: the break you
+  // did not take still counts down.
+  autoAdvance: false,
   // Day-first and 24-hour, which is what most of the world writes.
   dateFormat: "dd-MM-yyyy",
   timeFormat: "24h"
@@ -163,6 +167,7 @@ function normalize(raw) {
     longBreakMinutes: int(source.longBreakMinutes, DEFAULTS.longBreakMinutes, 1, 120),
     longBreakEvery: int(source.longBreakEvery, DEFAULTS.longBreakEvery, 1, 12),
     todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20),
+    autoAdvance: bool(source.autoAdvance, DEFAULTS.autoAdvance),
     // Validated against the list in DateTime.js, duplicated here for the same
     // reason POSITIONS is: a QML `.import` would stop node loading this file.
     dateFormat: choice(source.dateFormat, DATE_FORMATS, DEFAULTS.dateFormat),

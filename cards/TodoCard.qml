@@ -62,7 +62,9 @@ Card {
   ])
 
   PomodoroDial {
-    anchors.horizontalCenter: parent.horizontalCenter
+    // As wide as the card: the ring centres itself, and the three phase
+    // buttons under it want the room.
+    width: parent.width
     todos: root.todos
     ringSize: Style.space(78)
   }

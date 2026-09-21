@@ -11,6 +11,7 @@ Column {
 
   signal timingChanged(string key, int value)
   signal formatPicked(string key, string value)
+  signal flagToggled(string key)
 
   readonly property var dateOptions: {
     var out = []
@@ -65,6 +66,14 @@ Column {
     minimum: 1
     maximum: 12
     onChanged: function (value) { root.timingChanged("longBreakEvery", value) }
+  }
+
+  ToggleRow {
+    width: parent.width
+    label: "Chain the rounds"
+    description: "Start the next phase by itself when one ends. Off, it waits for you."
+    checked: root.config.autoAdvance
+    onToggled: root.flagToggled("autoAdvance")
   }
 
   StepperRow {

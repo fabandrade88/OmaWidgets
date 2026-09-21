@@ -102,9 +102,15 @@ is under it, sorted by how nearly late each item is.
 
 Focus is 25 minutes, the short break 5, the long break 15, and a long break
 arrives every fourth focus round. All four are settings, because that is a
-convention rather than a law. When a phase ends the next one starts on its own
-and an alarm sounds: a chime from the freedesktop sound theme, and a desktop
-notification. A phase you skip into waits for you to start it.
+convention rather than a law.
+
+The three phases sit under the ring as buttons, each showing its length, so a
+long break is one press rather than four completed rounds. The phase showing is
+the one highlighted, and pressing it starts or pauses it.
+
+When a phase ends an alarm sounds — a chime from the freedesktop sound theme,
+and a desktop notification — and the next phase is loaded and waits for you.
+Switch **Chain the rounds** on if you would rather it started by itself.
 
 Each to-do can have a deadline, and its colour says how close that is:
 
@@ -124,6 +130,9 @@ deadline in it, so a glance at the desktop says whether anything needs you.
 <p align="center">
   <img src="todo.png" alt="The to-do card with a running Pomodoro round, and the compact tile beside it" width="560">
 </p>
+
+A to-do longer than the card is wide is elided to one line; clicking it unfolds
+the rest, and clicking again folds it back.
 
 Done to-dos can be archived one at a time or all at once, and brought back from
 the archive later. The list lives in

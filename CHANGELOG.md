@@ -4,6 +4,33 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.8.0] — 2026-09-21
+
+### Added
+
+- **The three phases are buttons.** Focus, short break and long break sit under
+  the ring as one segmented control, each showing its length. The phase running
+  is the one highlighted, and pressing it starts or pauses — so the three
+  buttons are the transport as well. The long break used to be reachable only
+  by completing four focus rounds in a row.
+- **Chaining the rounds is a setting, and it is off.** A phase that ends still
+  sounds its alarm, but the next one now waits to be started unless **Chain the
+  rounds** is switched on. A break you did not take cannot count down without
+  you.
+- **A long to-do expands when you click it.** One line, elided, until you want
+  the rest; clicking again folds it back. Up to six lines, because a card is
+  not a text editor.
+- `omarchy-shell omawidgets startPhase focus|short|long` starts one by name.
+
+### Changed
+
+- The phase name no longer sits inside the ring, where "Short break" was wider
+  than the ring it was centred in. The segments say which phase it is, and the
+  card's own subtitle says so too.
+- `PomodoroClock.qml` is its own component. The to-do service was doing two
+  jobs — a countdown and a durable list — and had grown past the line limit
+  that says so.
+
 ## [1.7.5] — 2026-09-21
 
 ### Fixed

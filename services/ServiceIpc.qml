@@ -57,6 +57,12 @@ Item {
     }
     function startPomodoro(): string { root.service.todos.toggleRunning(); return root.service.todos.running ? "running" : "paused" }
     function skipPhase(): string { root.service.todos.skip(); return root.service.todos.phase }
+    // Starts one phase by name — focus, short or long — the way the card's
+    // three buttons do. An unknown name changes nothing and says so.
+    function startPhase(name: string): string {
+      root.service.todos.startPhase(name)
+      return root.service.todos.phase === name ? root.service.todos.phase : "unknown phase"
+    }
     function testAlarm(): string { root.service.todos.alarm("focus"); return "ok" }
 
     // Reads the current profile, and sets it only through the allowlisted path.

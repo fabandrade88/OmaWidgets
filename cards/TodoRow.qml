@@ -18,6 +18,10 @@ Item {
   // never one mis-tap away from a list you are working through.
   property bool deletable: false
   property var config: ({})
+  // A to-do longer than the card is wide is elided until it is clicked. Kept
+  // here rather than in the list so reordering or re-sorting does not fold one
+  // back up under the reader.
+  property bool expanded: false
 
   signal toggled()
   signal archiveToggled()
@@ -78,6 +82,16 @@ Item {
     }
   }
 
+  // Clicking the text unfolds it, and folds it back. Only where there is
+  // something to unfold, so a click on a short to-do still reaches the card
+  // underneath — on the desktop that is what selects the card for dragging.
+  MouseArea {
+    anchors.fill: label
+    enabled: body.truncated || root.expanded
+    cursorShape: Qt.PointingHandCursor
+    onClicked: root.expanded = !root.expanded
+  }
+
   Column {
     id: label
     anchors.left: box.right
@@ -88,15 +102,19 @@ Item {
     spacing: 0
 
     Text {
+      id: body
       textFormat: Text.PlainText
       width: parent.width
       // A to-do's text comes from a file this plugin writes but anyone can edit,
-      // so it is plain text and elided, never interpreted.
+      // so it is plain text and never interpreted. Elided until it is clicked,
+      // then wrapped — bounded, because a card is not a text editor.
       text: root.todo ? root.todo.text : ""
       color: root.done ? Qt.darker(Color.popups.text, 1.6) : Color.popups.text
       font.family: Style.font.family
       font.pixelSize: Style.font.body
       font.strikeout: root.done
+      wrapMode: root.expanded ? Text.Wrap : Text.NoWrap
+      maximumLineCount: root.expanded ? 6 : 1
       elide: Text.ElideRight
     }
 

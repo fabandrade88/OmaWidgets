@@ -28,6 +28,7 @@ Column {
   signal tileSizeChanged(int size)
   signal settingChanged(string key, int value)
   signal textSettingChanged(string key, string value)
+  signal flagToggled(string key)
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -114,6 +115,7 @@ Column {
       config: root.config
       onTimingChanged: function (key, value) { root.settingChanged(key, value) }
       onFormatPicked: function (key, value) { root.textSettingChanged(key, value) }
+      onFlagToggled: function (key) { root.flagToggled(key) }
     }
   }
 

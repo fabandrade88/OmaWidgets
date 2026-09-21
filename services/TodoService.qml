@@ -1,11 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "../model/Pomodoro.js" as Pomodoro
 import "../model/Todo.js" as Todo
 import "../model/TodoList.js" as TodoList
 
-// The to-do list and the Pomodoro timer.
+// The to-do list: what is on it, and the file it lives in.
 //
 // This is the one thing in the plugin that keeps state of its own, so it is the
 // one thing that writes a file. It goes to $XDG_STATE_HOME/omawidgets/todos.json
@@ -34,64 +33,32 @@ Item {
   readonly property var archivedItems: TodoList.archived(items)
 
   // ------------------------------------------------------------- pomodoro
+  //
+  // The clock is its own component; this exposes what the cards read so a card
+  // still talks to one service rather than reaching through it.
 
-  readonly property var timing: Pomodoro.normalize(config)
-  property string phase: Pomodoro.FOCUS
-  property int remaining: Pomodoro.durationSeconds(Pomodoro.FOCUS, timing)
-  property bool running: false
-  property int completedFocus: 0
+  PomodoroClock {
+    id: pomodoro
+    config: root.config
+    onPhaseEnded: function (ended, next) { root.phaseEnded(ended, next) }
+  }
 
-  readonly property int phaseSeconds: Pomodoro.durationSeconds(phase, timing)
-  readonly property real phaseProgress: Pomodoro.progress(remaining, phaseSeconds)
-  readonly property string remainingLabel: Pomodoro.formatRemaining(remaining)
-  readonly property string phaseLabel: Pomodoro.phaseLabel(phase)
+  readonly property alias phase: pomodoro.phase
+  readonly property alias remaining: pomodoro.remaining
+  readonly property alias running: pomodoro.running
+  readonly property alias completedFocus: pomodoro.completedFocus
+  readonly property alias phaseProgress: pomodoro.phaseProgress
+  readonly property alias remainingLabel: pomodoro.remainingLabel
+  readonly property alias phaseLabel: pomodoro.phaseLabel
+  readonly property alias timing: pomodoro.timing
 
   signal phaseEnded(string endedPhase, string nextPhase)
 
-  function start() { if (remaining > 0) running = true }
-  function pause() { running = false }
-  function toggleRunning() { running ? pause() : start() }
-
-  function resetPhase() {
-    running = false
-    remaining = phaseSeconds
-  }
-
-  function setPhase(next) {
-    phase = Pomodoro.isPhase(next) ? next : Pomodoro.FOCUS
-    remaining = phaseSeconds
-  }
-
-  // Ends the phase and moves to the next one, which is what both the skip
-  // button and the countdown reaching zero do.
-  function advance(announce) {
-    var ended = phase
-    if (ended === Pomodoro.FOCUS) completedFocus += 1
-    var next = Pomodoro.nextPhase(ended, completedFocus, timing)
-    setPhase(next)
-    // A break that starts by itself should run by itself; one you skipped into
-    // should wait for you.
-    running = announce === true
-    if (announce === true) {
-      phaseEnded(ended, next)
-      alarm(ended)
-    }
-  }
-
-  function skip() { advance(false) }
-
-  // The alarm: a sound and a notification, both fire-and-forget. Argument
-  // vectors, never a shell string, so the phase name cannot become a command.
-  function alarm(endedPhase) {
-    var label = Pomodoro.phaseLabel(endedPhase)
-    var body = endedPhase === Pomodoro.FOCUS
-      ? "Focus round done. Time for a break."
-      : "Break over. Back to it."
-    notifyProcess.command = ["notify-send", "--app-name=OmaWidgets",
-      "--icon=alarm-symbolic", label + " finished", body]
-    notifyProcess.running = true
-    if (!soundProcess.running) soundProcess.running = true
-  }
+  function toggleRunning() { pomodoro.toggleRunning() }
+  function resetPhase() { pomodoro.resetPhase() }
+  function skip() { pomodoro.skip() }
+  function startPhase(next) { pomodoro.startPhase(next) }
+  function alarm(endedPhase) { pomodoro.alarm(endedPhase) }
 
   // ----------------------------------------------------------------- list
 
@@ -133,22 +100,13 @@ Item {
   }
 
   Timer {
-    // One second while the timer runs, so the clock is a clock. A minute
-    // otherwise, which is enough to move a deadline from calm to soon — there is
-    // nothing else on this card that changes faster.
-    interval: root.running ? 1000 : 60000
-    running: true
+    // A minute is enough to move a deadline from calm to soon, and nothing else
+    // on this card changes faster. The countdown keeps its own second hand.
+    interval: 60000
     repeat: true
-    onTriggered: {
-      root.clock++
-      if (!root.running) return
-      if (root.remaining > 1) {
-        root.remaining -= 1
-        return
-      }
-      root.remaining = 0
-      root.advance(true)
-    }
+    running: root.active
+    triggeredOnStart: true
+    onTriggered: root.clock++
   }
 
   // Writing is a separate view: GuardedFile owns reading, and a writer that
@@ -159,15 +117,6 @@ Item {
     printErrors: false
     atomicWrites: true
   }
-
-  Process {
-    id: soundProcess
-    // The freedesktop sound theme ships with every desktop; if it is missing the
-    // notification still arrives and only the sound is lost.
-    command: ["pw-play", "/usr/share/sounds/freedesktop/stereo/complete.oga"]
-  }
-
-  Process { id: notifyProcess }
 
   // The directory is created once, if it is not already there. The only write
   // this plugin makes outside its own state file.

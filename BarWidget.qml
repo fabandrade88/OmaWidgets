@@ -49,6 +49,14 @@ Panel {
     bar.shell.updateEntryInline(moduleName, next)
   }
 
+  // One setting, by name. The panel below sends numbers, strings and flags the
+  // same way, and this is the only place that turns one into a write.
+  function writeOne(key, value) {
+    var change = ({})
+    change[key] = value
+    write(change)
+  }
+
   function toggleDesktop() {
     write({ desktop: !config.desktop })
   }
@@ -181,16 +189,9 @@ Panel {
           onProfileRequested: function (profile) { root.setProfile(profile) }
           onColumnsChanged: function (value) { root.write({ columns: value }) }
           onTileSizeChanged: function (value) { root.write({ tileSize: value }) }
-          onSettingChanged: function (key, value) {
-            var change = ({})
-            change[key] = value
-            root.write(change)
-          }
-          onTextSettingChanged: function (key, value) {
-            var change = ({})
-            change[key] = value
-            root.write(change)
-          }
+          onSettingChanged: function (key, value) { root.writeOne(key, value) }
+          onTextSettingChanged: function (key, value) { root.writeOne(key, value) }
+          onFlagToggled: function (key) { root.writeOne(key, !root.config[key]) }
         }
       }
     }
