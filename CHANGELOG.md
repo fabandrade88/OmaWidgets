@@ -4,6 +4,29 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.7.3] — 2026-09-21
+
+### Added
+
+- **The archive is reachable from the desktop card.** Browsing it, putting a
+  to-do back and deleting one for good need no keyboard, so the buttons that do
+  those things are no longer restricted to the overlay and the bar popup.
+- **A to-do can be deleted for good**, from the archive. It is the one action
+  here that cannot be undone, so it is offered only there — never a mis-tap
+  away from the list you are working through.
+
+### Fixed
+
+- **The composer closes when you click away.** It held on until Escape: now
+  losing the keyboard closes it, tapping another widget closes it, and the **+**
+  stays put as an **×** while it is open, so there is a way out that does not
+  depend on the desktop having been handed a keyboard at all.
+- Opening the archive puts the composer away with it, instead of leaving it
+  half-open behind a list it cannot add to.
+- `ui/qmldir` lists every shared component. A directory that has a qmldir
+  resolves only what that file names, so after the move into folders the shared
+  drawing was reachable from the shell but not from a plain QML import of `ui/`.
+
 ## [1.7.2] — 2026-09-21
 
 ### Changed

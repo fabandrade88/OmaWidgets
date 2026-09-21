@@ -24,7 +24,34 @@ Column {
 
   // Focused as soon as it appears, so asking to add a to-do puts the cursor
   // where the to-do goes.
-  onVisibleChanged: if (visible) textField.forceActiveFocus()
+  onVisibleChanged: {
+    hadFocus = false
+    if (visible) textField.forceActiveFocus()
+  }
+
+  // Clicking away is a way of saying "never mind": the composer closes, the
+  // card's + comes back and the desktop hands the keyboard back to the window
+  // you were in. Escape does the same thing, but nobody should have to know
+  // that.
+  //
+  // Checked a beat later, and only once the composer has actually held focus:
+  // moving between its own three fields drops focus for an instant, and on the
+  // desktop layer the compositor grants focus a moment after the composer is
+  // shown — dismissing on either would close it before it could be typed into.
+  property bool hadFocus: false
+  readonly property bool focused: textField.activeFocus || dayField.activeFocus
+    || timeField.activeFocus
+
+  onFocusedChanged: {
+    if (focused) hadFocus = true
+    else if (hadFocus) focusWatch.restart()
+  }
+
+  Timer {
+    id: focusWatch
+    interval: 150
+    onTriggered: if (root.visible && root.hadFocus && !root.focused) root.dismissed()
+  }
 
   // Parsed from the two fields rather than a date picker: a picker is a lot of
   // widget for something most to-dos do not have at all.

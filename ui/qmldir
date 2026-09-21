@@ -1,1 +1,12 @@
+# The singleton needs this file; once it exists, a directory import of ui/
+# resolves only what the file lists — so every shared component is listed too.
 singleton TodoColors 1.0 TodoColors.qml
+CloseButton 1.0 CloseButton.qml
+IconRing 1.0 IconRing.qml
+MediaControls 1.0 MediaControls.qml
+MeterBar 1.0 MeterBar.qml
+MetricGauge 1.0 MetricGauge.qml
+PodGauge 1.0 PodGauge.qml
+PodMark 1.0 PodMark.qml
+ProfileSelector 1.0 ProfileSelector.qml
+RingGauge 1.0 RingGauge.qml

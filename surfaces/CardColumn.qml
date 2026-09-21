@@ -81,11 +81,23 @@ PackedLayout {
 
   Component {
     id: todoComponent
-    TodoCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
+    TodoCard { id: todoCard
+      width: root.columnWidth; backgroundOpacity: root.settings.opacity
       selected: parent.selected
       closable: root.arrangeable
       onCloseRequested: root.hideRequested(parent.cardId)
       todos: root.todos; config: root.settings
+
+      // A tap on any other widget is also a way of saying "never mind": the
+      // composer closes and the desktop gives the keyboard back, the same as
+      // clicking off the cards entirely. In `resources` because a card's default
+      // property is its visible content, and this is not content.
+      resources: Connections {
+        target: root
+        function onSelectRequested(id) {
+          if (id !== Layout.CARD_TODO) todoCard.composerOpen = false
+        }
+      }
       // The overlay and the popup already have a keyboard, so the composer is
       // simply there. The desktop asks first — see DesktopSurface.
       editable: !root.arrangeable

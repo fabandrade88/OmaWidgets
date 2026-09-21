@@ -13,10 +13,15 @@ Item {
   property var todo: null
   property int now: 0
   property bool archivable: true
+  // Only offered in the archive, where putting a to-do back is the other
+  // option: deleting is the one action here that cannot be undone, so it is
+  // never one mis-tap away from a list you are working through.
+  property bool deletable: false
   property var config: ({})
 
   signal toggled()
   signal archiveToggled()
+  signal deleteRequested()
 
   readonly property string urgency: TodoList.urgency(todo, now > 0 ? now : Date.now())
   readonly property color accent: TodoColors.forUrgency(urgency)
@@ -77,7 +82,7 @@ Item {
     id: label
     anchors.left: box.right
     anchors.leftMargin: Style.spacing.md
-    anchors.right: archiveButton.left
+    anchors.right: rowActions.left
     anchors.rightMargin: Style.spacing.xs
     anchors.verticalCenter: parent.verticalCenter
     spacing: 0
@@ -108,16 +113,30 @@ Item {
     }
   }
 
-  PanelActionButton {
-    id: archiveButton
+  Row {
+    id: rowActions
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
-    visible: root.archivable
-    iconText: root.archived ? "󰦛" : "󱉙"
-    tooltipText: root.archived ? "Bring back" : "Archive"
-    foreground: Qt.darker(Color.popups.text, 1.4)
-    fontSize: Style.font.bodySmall
-    size: Style.space(20)
-    onClicked: root.archiveToggled()
+    spacing: Style.spacing.xxs
+
+    PanelActionButton {
+      visible: root.archivable
+      iconText: root.archived ? "󰦛" : "󱉙"
+      tooltipText: root.archived ? "Bring back" : "Archive"
+      foreground: Qt.darker(Color.popups.text, 1.4)
+      fontSize: Style.font.bodySmall
+      size: Style.space(20)
+      onClicked: root.archiveToggled()
+    }
+
+    PanelActionButton {
+      visible: root.deletable
+      iconText: "󰩹"
+      tooltipText: "Delete for good"
+      foreground: Qt.darker(Color.popups.text, 1.4)
+      fontSize: Style.font.bodySmall
+      size: Style.space(20)
+      onClicked: root.deleteRequested()
+    }
   }
 }

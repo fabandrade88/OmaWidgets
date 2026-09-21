@@ -28,6 +28,10 @@ Card {
 
   onComposerOpenChanged: root.composingChanged(composerOpen)
 
+  // The archive is a different list, not a place to add to: opening it puts the
+  // composer away, and the keyboard with it.
+  onShowArchiveChanged: if (showArchive) composerOpen = false
+
   readonly property bool composerVisible: (editable || composerOpen) && !showArchive
 
   readonly property var counts: todos ? todos.counts : ({ open: 0, done: 0, total: 0, archived: 0 })
@@ -69,12 +73,14 @@ Card {
         todo: modelData
         config: root.config
         now: root.todos ? root.todos.clock && Date.now() : 0
+        deletable: root.showArchive
         onToggled: if (root.todos) root.todos.toggle(modelData.id)
         onArchiveToggled: {
           if (!root.todos) return
           if (modelData.archived === true) root.todos.unarchive(modelData.id)
           else root.todos.archive(modelData.id)
         }
+        onDeleteRequested: if (root.todos) root.todos.remove(modelData.id)
       }
     }
 
@@ -100,14 +106,18 @@ Card {
   }
 
   // On the desktop, asking to add is what hands the surface a keyboard.
+  //
+  // It stays put while the composer is open, as an X: clicking away closes the
+  // composer too, but that depends on the surface having been given the
+  // keyboard, and a button that is simply there does not.
   PanelActionButton {
     anchors.horizontalCenter: parent.horizontalCenter
-    visible: root.requestable && !root.editable && !root.composerOpen && !root.showArchive
-    iconText: "󰐕"
-    tooltipText: "Add a to-do"
+    visible: root.requestable && !root.editable && !root.showArchive
+    iconText: root.composerOpen ? "󰅖" : "󰐕"
+    tooltipText: root.composerOpen ? "Never mind" : "Add a to-do"
     foreground: root.foreground
     bordered: true
-    onClicked: root.composerOpen = true
+    onClicked: root.composerOpen = !root.composerOpen
   }
 
   TodoComposer {
@@ -124,9 +134,12 @@ Card {
     onDismissed: root.composerOpen = false
   }
 
+  // Reading the archive — and putting something back, or deleting it for good —
+  // needs no keyboard, so these are offered wherever the card can be touched at
+  // all, the desktop layer included.
   Row {
     anchors.horizontalCenter: parent.horizontalCenter
-    visible: root.editable
+    visible: root.editable || root.requestable
     spacing: Style.spacing.sm
 
     PanelActionButton {

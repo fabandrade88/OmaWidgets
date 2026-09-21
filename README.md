@@ -38,7 +38,7 @@ omarchy plugin remove io.github.fabandrade88.omawidgets    # uninstall
 | **A Nerd Font** | Omarchy's own bar font supplies every icon |
 | `upower` | Battery card. Ships with Omarchy |
 | `power-profiles-daemon` | Power profile card. Ships with Omarchy |
-| [librepods](https://github.com/kavishdevar/librepods) | *Optional.* AirPods card. Without it, that card hides itself |
+| [librepods](https://github.com/kavishdevar/librepods) | *Optional.* AirPods card only. It reads the daemon's own status file, so the [AirPods plugin](https://github.com/thisisgm/omarchy-pods) is **not** required — with neither installed, that card simply hides itself and everything else works |
 | `nvidia-smi` | *Optional.* NVIDIA GPU readings. AMD and Intel are read from sysfs |
 
 Nothing else at runtime: readings come from `/proc`, `/sys`, UPower and MPRIS,
@@ -125,3 +125,7 @@ Built on [Quickshell](https://quickshell.org/) and the
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+---
+
+<p align="center"><sub>Developed with the support of Claude.</sub></p>
