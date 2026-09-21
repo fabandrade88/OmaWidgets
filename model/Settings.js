@@ -67,6 +67,9 @@ var DEFAULTS = {
   // is the thing a Pomodoro timer is most often criticised for: the break you
   // did not take still counts down.
   autoAdvance: false,
+  // One GET of the published manifest, once a day, to say whether a newer
+  // version exists. Nothing is installed by it — see UpdateService.
+  updateCheck: true,
   // Day-first and 24-hour, which is what most of the world writes.
   dateFormat: "dd-MM-yyyy",
   timeFormat: "24h"
@@ -168,6 +171,7 @@ function normalize(raw) {
     longBreakEvery: int(source.longBreakEvery, DEFAULTS.longBreakEvery, 1, 12),
     todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20),
     autoAdvance: bool(source.autoAdvance, DEFAULTS.autoAdvance),
+    updateCheck: bool(source.updateCheck, DEFAULTS.updateCheck),
     // Validated against the list in DateTime.js, duplicated here for the same
     // reason POSITIONS is: a QML `.import` would stop node loading this file.
     dateFormat: choice(source.dateFormat, DATE_FORMATS, DEFAULTS.dateFormat),

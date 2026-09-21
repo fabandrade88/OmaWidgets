@@ -69,6 +69,9 @@ omarchy-shell omawidgets pomodoro                    # "running  focus  18:42"
 omarchy-shell omawidgets startPomodoro               # start or pause
 omarchy-shell omawidgets skipPhase
 omarchy-shell omawidgets startPhase short         # focus, short or long, by name
+
+omarchy-shell omawidgets version                 # "1.9.0<TAB>current<TAB>1.9.0"
+omarchy-shell omawidgets checkForUpdate          # ask now, whatever the setting says
 ```
 
 `position` takes any of the eight names in the table below. An unknown one
@@ -91,6 +94,7 @@ typo costs you one setting rather than the widget.
 | `longBreakMinutes` | `15` | 1–120 |
 | `longBreakEvery` | `4` | 1–12 focus rounds before the long break |
 | `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
+| `updateCheck` | `true` | Ask GitHub once a day whether a newer version was published. Off, only the popup's **Check now** button asks. Nothing is ever installed without you |
 | `autoAdvance` | `false` | Start the next phase by itself when one ends. Off, the alarm still sounds and the next phase waits to be started |
 | `dateFormat` | `dd-MM-yyyy` | Also `dd/MM/yyyy`, `yyyy-MM-dd`, `MM/dd/yyyy` |
 | `timeFormat` | `24h` | Or `12h` |

@@ -2,9 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.fabandrade88.omawidgets",
   "name": "OmaWidgets",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "author": "Fabricio Oliveira de Andrade",
   "license": "MIT",
+  "repository": "https://github.com/fabandrade88/OmaWidgets",
   "description": "Desktop widget cards for Omarchy, in the spirit of the macOS desktop: CPU, memory and GPU load and temperature, now playing with transport controls, a to-do list with a Pomodoro timer, AirPods battery, battery status, and a one-click power profile switch. Drag them into place, and switch to compact rounded tiles. Themed entirely from the active Omarchy theme.",
   "kinds": [
     "service",
@@ -55,6 +56,7 @@
       "longBreakEvery": 4,
       "todoRows": 5,
       "autoAdvance": false,
+      "updateCheck": true,
       "dateFormat": "dd-MM-yyyy",
       "timeFormat": "24h"
     },

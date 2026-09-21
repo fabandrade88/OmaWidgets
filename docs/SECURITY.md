@@ -74,14 +74,34 @@ substitutions, shell separators, newlines, flags and case variants.
 `perf_event` access, no setuid helper. If a reading needs a privilege, the
 plugin does without the reading.
 
-**It talks to the network in exactly one place, and you can turn it off.**
-Album art from a streaming player is a URL on that service's CDN, and showing it
-means fetching it — Spotify's art lives at `i.scdn.co`. Set `albumArt` to `false`
-and no art is loaded from anywhere; local players' `file://` art is unaffected by
-that request either way. The URL's scheme is checked before it reaches an image,
-so `https`, `http` and `file` are accepted and a `data:` blob or a `javascript:`
-string is dropped. Nothing else in the codebase opens a connection: there is no
-HTTP client, no telemetry, and no update check.
+**It talks to the network in two places, and you can turn both off.**
+
+The first is the update check: one `GET` of this repository's published
+`manifest.json`, at most once a day, to compare the published version with the
+installed one. It sends nothing — no identifier, no settings, no usage — and
+the URL is rebuilt from an allowlisted `https://github.com/<owner>/<repo>`
+shape rather than followed as written, so a hand-edited manifest cannot aim it
+elsewhere. The response is bounded before it is parsed and the version has to
+look like a version. `updateCheck: false` stops it entirely; the popup's
+**Check now** button still works, because asking outright is a different thing
+from asking on a timer.
+
+**It does not update itself.** The popup's **Update** button opens a terminal
+running Omarchy's own `omarchy plugin update <id>`, which shows a diff of what
+would change and asks before touching the checkout. That review step is the one
+guarantee the installer makes, and a plugin that quietly replaced its own code
+would be taking it away. The id is re-validated against the same shape
+`omarchy-plugin-validate` enforces before it reaches a command line.
+
+The second is album art. Art from a streaming player is a URL on that service's
+CDN, and showing it means fetching it — Spotify's art lives at `i.scdn.co`. Set
+`albumArt` to `false` and no art is loaded from anywhere; local players'
+`file://` art is unaffected by that request either way. The URL's scheme is
+checked before it reaches an image, so `https`, `http` and `file` are accepted
+and a `data:` blob or a `javascript:` string is dropped.
+
+Nothing else in the codebase opens a connection: no telemetry, no analytics, and
+nothing that reports anything about you anywhere.
 
 For what it is worth, Omarchy's own media widget binds art URLs the same way, so
 leaving this on adds no exposure your shell did not already have.

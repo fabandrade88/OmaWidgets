@@ -4,6 +4,28 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.9.0] — 2026-09-21
+
+### Added
+
+- **It says when a newer version has been published.** The popup grows a
+  **Version** section: what you have, what is out, a **Check now** button, and
+  an **Update** button that opens a terminal running Omarchy's own
+  `omarchy plugin update` — which shows you a diff of what would change before
+  touching anything. The plugin never rewrites its own code: skipping that
+  review is exactly what makes a self-updater worse than a notice.
+- The check is one `GET` of this repository's published `manifest.json`, at most
+  once a day, sending nothing. `updateCheck: false` turns the daily check off
+  and leaves the button; the answer is remembered between sessions so a restart
+  is not a reason to ask again.
+- `omarchy-shell omawidgets version` and `checkForUpdate`.
+
+### Changed
+
+- `BarIpc.qml` holds the bar widget's IPC verbs, the way `ServiceIpc.qml` holds
+  the service's, and switching a card on or off is `Arrange.toggleCard` — both
+  because the widget had grown past the line limit again.
+
 ## [1.8.0] — 2026-09-21
 
 ### Added

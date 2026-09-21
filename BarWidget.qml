@@ -5,6 +5,7 @@ import qs.Ui
 import "settings"
 import "model/Arrange.js" as Arrange
 import "model/Layout.js" as Layout
+import "model/Update.js" as Update
 import "model/Settings.js" as Settings
 
 // Bar widget entry point: the icon in the bar, and the popup that configures the
@@ -55,6 +56,19 @@ Panel {
     var change = ({})
     change[key] = value
     write(change)
+  }
+
+  // Updating is Omarchy's job, in a terminal, with a diff the user reads first.
+  // This opens that terminal and types the command; it never touches the
+  // checkout itself, and the id is re-validated on the way out so nothing but a
+  // plugin id can reach the command line.
+  function runUpdate() {
+    var id = Update.commandId(moduleName)
+    if (id === "") return
+    updateProcess.command = ["omarchy-launch-floating-terminal-with-presentation",
+      "omarchy plugin update " + id]
+    updateProcess.running = true
+    close()
   }
 
   function toggleDesktop() {
@@ -119,21 +133,11 @@ Panel {
     }
   }
 
-  IpcHandler {
-    target: root.ipcTarget
-    function open(): void { root.open() }
-    function close(): void { root.close() }
-    function toggle(): void { root.toggle() }
-    // Flips the desktop cards without opening anything, for a Hyprland keybind.
-    function toggleDesktop(): string { root.toggleDesktop(); return root.config.desktop ? "shown" : "hidden" }
+  Process { id: updateProcess }
 
-    // Move the cards from a script or a keybind. Settings.normalize rejects a
-    // position that does not exist, so the reply says what actually happened
-    // rather than echoing the request back.
-    function position(name: string): string {
-      root.setPosition(name)
-      return root.config.position
-    }
+  BarIpc {
+    widget: root
+    ipcTarget: root.ipcTarget
   }
 
   KeyboardPanel {
@@ -171,18 +175,13 @@ Panel {
           width: parent.width
           config: root.config
           power: root.power
+          updates: root.service ? root.service.updates : null
           serviceAvailable: root.serviceAvailable
           onDesktopToggled: root.toggleDesktop()
           onCompactToggled: root.write({ compact: !root.config.compact })
           onCoreBarsToggled: root.write({ showCoreBars: !root.config.showCoreBars })
-          // A switch in the folding Cards section. The chosen set goes through
-          // applySelection so turning one on keeps the order a drag established.
           onCardToggled: function (card) {
-            var chosen = root.config.cards.slice()
-            var at = chosen.indexOf(card)
-            if (at === -1) chosen.push(card)
-            else chosen.splice(at, 1)
-            root.write({ cards: Arrange.applySelection(root.config.cards, chosen, Settings.KNOWN_CARDS) })
+            root.write({ cards: Arrange.toggleCard(root.config.cards, card, Settings.KNOWN_CARDS) })
           }
           onPositionPicked: function (position) { root.setPosition(position) }
           onOverlayRequested: root.openOverlay()
@@ -192,6 +191,8 @@ Panel {
           onSettingChanged: function (key, value) { root.writeOne(key, value) }
           onTextSettingChanged: function (key, value) { root.writeOne(key, value) }
           onFlagToggled: function (key) { root.writeOne(key, !root.config[key]) }
+          onUpdateCheckRequested: if (root.service) root.service.updates.check(true)
+          onUpdateRequested: root.runUpdate()
         }
       }
     }

@@ -26,6 +26,13 @@ omarchy plugin disable io.github.fabandrade88.omawidgets   # stop running it
 omarchy plugin remove io.github.fabandrade88.omawidgets    # uninstall
 ```
 
+The popup's **Version** section says which version you have and whether a newer
+one has been published — once a day, by reading this repository's
+`manifest.json`, and never by sending anything. **Update** there opens a
+terminal running the `omarchy plugin update` above, which shows you a diff of
+what would change before anything is touched. The plugin never rewrites its own
+code, and the daily check can be switched off in the same place.
+
 > `disable` removes the plugin's bar entry, and Omarchy keeps a widget's
 > settings on that entry — so enabling again starts from the defaults. To put
 > the cards away without losing your setup, right-click the bar icon.
@@ -59,6 +66,7 @@ and nothing is polled that a signal can report.
 | **Arranging** | Click to select, drag to reorder, hover for an X to hide — or from a keybind |
 | **Themed** | Every colour, border, corner and type size from the active Omarchy theme |
 | **Idle-free** | Nothing on screen means no timers: measurably the same as not installing it |
+| **Update aware** | Says when a newer version has been published, and opens Omarchy's own updater to install it |
 
 ## Screenshots
 

@@ -84,6 +84,18 @@ function applySelection(current, selected, canonical) {
   return out
 }
 
+// One card switched on or off, keeping the order a drag established: the set is
+// changed here and then reapplied, so turning a card back on returns it to
+// where the user put it rather than to the end.
+function toggleCard(current, card, canonical) {
+  var existing = list(current)
+  var chosen = existing.slice()
+  var at = chosen.indexOf(card)
+  if (at === -1) chosen.push(card)
+  else chosen.splice(at, 1)
+  return applySelection(existing, chosen, canonical)
+}
+
 // The service entry point is handed no settings of its own, so it finds its bar
 // layout entry and reads the inline values from there. This is the same object
 // the bar widget receives, which keeps one source of truth for both surfaces.
@@ -110,6 +122,7 @@ if (typeof module !== "undefined") {
     reorder: reorder,
     nextSelection: nextSelection,
     applySelection: applySelection,
+    toggleCard: toggleCard,
     fromBarConfig: fromBarConfig,
     moveBy: moveBy
   }

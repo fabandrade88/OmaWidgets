@@ -15,6 +15,7 @@ Column {
 
   required property var config
   property var power: null
+  property var updates: null
   property bool serviceAvailable: true
 
   signal desktopToggled()
@@ -29,6 +30,8 @@ Column {
   signal settingChanged(string key, int value)
   signal textSettingChanged(string key, string value)
   signal flagToggled(string key)
+  signal updateCheckRequested()
+  signal updateRequested()
 
   readonly property color foreground: Color.popups.text
   readonly property color dim: Qt.darker(foreground, 1.45)
@@ -115,6 +118,22 @@ Column {
       config: root.config
       onTimingChanged: function (key, value) { root.settingChanged(key, value) }
       onFormatPicked: function (key, value) { root.textSettingChanged(key, value) }
+      onFlagToggled: function (key) { root.flagToggled(key) }
+    }
+  }
+
+  ExpanderSection {
+    width: parent.width
+    title: "Version"
+    summary: updateSection.summary
+
+    UpdateSection {
+      id: updateSection
+      width: parent.width
+      config: root.config
+      updates: root.updates
+      onCheckRequested: root.updateCheckRequested()
+      onUpdateRequested: root.updateRequested()
       onFlagToggled: function (key) { root.flagToggled(key) }
     }
   }

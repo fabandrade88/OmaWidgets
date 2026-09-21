@@ -65,6 +65,17 @@ Item {
     }
     function testAlarm(): string { root.service.todos.alarm("focus"); return "ok" }
 
+    // What is installed, what is published, and what that means. Reading only:
+    // installing is `omarchy plugin update`, which shows a diff and asks.
+    function version(): string {
+      var u = root.service.updates
+      return u.installedVersion + "\t" + u.outcome + "\t" + (u.latestVersion || "unknown")
+    }
+    function checkForUpdate(): string {
+      root.service.updates.check(true)
+      return "checking"
+    }
+
     // Reads the current profile, and sets it only through the allowlisted path.
     function profile(): string { return root.service.power.activeProfile }
     function setProfile(name: string): string { return root.service.setProfile(name) ? "ok" : "rejected" }

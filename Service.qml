@@ -74,6 +74,7 @@ Item {
   readonly property alias todos: todoService
 
   readonly property alias arranger: arranger
+  readonly property alias updates: updateService
 
   function setProfile(profile) {
     return powerService.setProfile(profile)
@@ -134,6 +135,15 @@ Item {
     id: arranger
     config: root.config
     presence: ({ hasPods: podsService.hasBattery, hasMedia: mediaService.hasMedia })
+  }
+
+  UpdateService {
+    id: updateService
+    config: root.config
+    // Both from the manifest the host loaded, so the check follows the plugin
+    // rather than anything a setting could point elsewhere.
+    repository: root.manifest && root.manifest.repository ? String(root.manifest.repository) : ""
+    installedVersion: root.manifest && root.manifest.version ? String(root.manifest.version) : ""
   }
 
   TodoService {
