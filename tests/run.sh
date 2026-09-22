@@ -6,7 +6,7 @@
 #   2. the pure-JS model, under node
 #   3. the QML, under qmllint
 #   4. the shell scripts, under shellcheck
-#   5. the hardware probe, on this machine
+#   5. the hardware probe, and the fetch helper against a hostile server
 #   6. the 200-line-per-file limit this repo holds itself to
 #
 # The QML step needs an import root containing a `qs` directory, because the
@@ -61,6 +61,9 @@ if command -v shellcheck >/dev/null 2>&1; then
 else
   echo "skip shell — shellcheck not installed"
 fi
+
+step "fetch"
+./tests/fetch.sh || status=1
 
 step "size"
 # The limit is a design constraint, not a style preference: a file that outgrows

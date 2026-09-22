@@ -41,32 +41,40 @@ Item {
     if (force !== true && !Update.dueForCheck(lastChecked, Date.now(), Update.INTERVAL_MS)) return
     checking = true
     error = ""
-    fetch.get(url)
+    fetcher.get(url)
   }
 
-  // The request itself is bounded three ways — deadline, declared length, and
-  // what has actually arrived — by BoundedFetch. Everything here is what to do
-  // with the answer.
-  BoundedFetch {
-    id: fetch
+  // The fetch happens in a helper, where curl can stop an oversized or stalled
+  // answer at the socket. What comes back here is a small local file.
+  Fetcher {
+    id: fetcher
+    name: "manifest"
     maxBytes: Update.MAX_BODY
-    timeoutMs: 8000
 
-    onLoaded: function (text, bytes) {
-      root.checking = false
-      root.lastChecked = Date.now()
-      var found = Update.versionFrom(text)
-      if (found === "") root.error = "The published manifest could not be read"
-      else root.latestVersion = found
-      root.save()
+    onFetched: function (path) {
+      manifestFile.path = path
+      manifestFile.reload()
     }
 
-    onFailed: function (reason) {
+    onFailed: function (code) {
       root.checking = false
       root.lastChecked = Date.now()
-      root.error = reason === "timed out" ? "GitHub did not answer in time"
-        : reason === "too large" ? "The published manifest is too large to be one"
+      root.error = code === 7 ? "The published manifest is too large to be one"
+        : code === 9 ? "GitHub answered with something else"
         : "Could not reach GitHub"
+      root.save()
+    }
+  }
+
+  GuardedFile {
+    id: manifestFile
+    maxBytes: Update.MAX_BODY
+    onTextLoaded: function (body) {
+      root.checking = false
+      root.lastChecked = Date.now()
+      var found = Update.versionFrom(body)
+      if (found === "") root.error = "The published manifest could not be read"
+      else root.latestVersion = found
       root.save()
     }
   }
@@ -80,13 +88,13 @@ Item {
     }))
   }
 
-  FileView {
+  GuardedFile {
     id: stateFile
     path: root.statePath
-    printErrors: false
-    onLoaded: {
+    maxBytes: Update.MAX_BODY
+    onTextLoaded: function (body) {
       try {
-        var saved = JSON.parse(text())
+        var saved = JSON.parse(body)
         if (saved && typeof saved === "object") {
           root.lastChecked = Number(saved.lastChecked) || 0
           root.latestVersion = Update.version(saved.latestVersion)
@@ -96,7 +104,7 @@ Item {
       }
       root.check(false)
     }
-    onLoadFailed: root.check(false)
+    onMissing: root.check(false)
   }
 
   FileView {

@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+#
+# Fetches one URL with hard ceilings and writes it to a file.
+#
+# This exists because nothing inside the shell process can bound a response.
+# Quickshell's XMLHttpRequest exposes no timeout, and its size can only be
+# inspected once Qt has buffered it: with `responseType = "arraybuffer"` not
+# until the body is complete, and even for text not until the first LOADING
+# event, which on a fast producer already carried 1.5 MB against a 64 KB cap
+# when measured. A check that runs after the memory has been taken is not a
+# limit. curl can stop at the socket, so the fetching happens here.
+#
+# Four ceilings, none of them advisory:
+#   --max-filesize  refuses a response whose declared length is over the cap
+#   head -c         cuts the stream at the cap, killing curl with SIGPIPE, so an
+#                   undeclared or chunked body stops at cap + 1
+#   --max-time      bounds a server that sends slowly, or not at all
+#   the size check  discards a file that reached the cap exactly, because a
+#                   truncated answer is not a short one
+#
+# Usage: omawidgets-fetch <url> <destination> <max-bytes> [image]
+#
+# Nothing reaches a shell: the URL and the destination are arguments, both are
+# validated here as well as by the caller, and `image` gates the result on the
+# file's own magic bytes rather than on whatever Content-Type came with it.
+#
+# On where these URLs may point: a cover URL comes from a process on the user's
+# own session bus, and the fetch runs as that same user. Refusing loopback or
+# private addresses here would not be a privilege boundary — a process that can
+# publish an MPRIS URL can already make the request itself. What matters is that
+# the answer cannot cost this shell unbounded memory or time, and cannot become
+# anything but a picture, which is what the ceilings and the magic check are
+# for.
+set -uo pipefail
+
+PATH=/usr/bin:/bin
+export PATH
+LC_ALL=C
+export LC_ALL
+
+HARD_CAP=1048576
+MAX_SECONDS=8
+
+url=${1:-}
+out=${2:-}
+cap=${3:-}
+kind=${4:-any}
+
+[[ -n $url && -n $out && -n $cap ]] || exit 2
+
+# http(s) only, no shell metacharacters, and short enough to be a URL.
+[[ $url =~ ^https?://[A-Za-z0-9][A-Za-z0-9._~:/?\#@!\&*+,\;=%-]*$ ]] || exit 3
+(( ${#url} <= 2048 )) || exit 3
+
+[[ $cap =~ ^[0-9]{1,8}$ ]] || exit 3
+(( cap > 0 && cap <= HARD_CAP )) || exit 3
+
+# Somewhere this user owns, and nowhere else.
+runtime=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+[[ $out == "$runtime"/omawidgets/* && $out != *..* ]] || exit 4
+
+dir=$(dirname -- "$out")
+mkdir -p "$dir" || exit 4
+# Fetched files accumulate one per track over a long session. They live in a
+# tmpfs that is wiped at logout, but an hour is long enough for any of them.
+find "$dir" -maxdepth 1 -type f -name '*.img' -mmin +60 -delete 2>/dev/null
+# And by count, for the same reason from the other direction: a player that
+# rewrites its artwork URL in a loop would otherwise fill a tmpfs an hour at a
+# time. Keep the newest eight of whatever this call is fetching.
+prefix=$(basename -- "$out"); prefix=${prefix%%-*}
+ls -1t "$dir/$prefix-"*.img 2>/dev/null | tail -n +8 | while IFS= read -r stale; do
+  rm -f -- "$stale"
+done
+
+# mktemp rather than a name we compose: a predictable temporary in a directory
+# another process of this user could reach is a symlink away from writing
+# somewhere else entirely.
+tmp=$(mktemp "$dir/.fetch.XXXXXXXX") || exit 4
+trap 'rm -f -- "$tmp"' EXIT
+
+# --proto-redir as well as --proto: without it a redirect can leave http(s)
+# for a scheme curl would not have started with.
+curl --silent --show-error --fail --location --max-redirs 2 \
+  --proto '=http,https' --proto-redir '=http,https' \
+  --max-time "$MAX_SECONDS" --max-filesize "$cap" \
+  --output - -- "$url" 2>/dev/null | head -c "$cap" > "$tmp"
+(( ${PIPESTATUS[0]} == 0 )) || exit 5
+
+size=$(stat -c %s -- "$tmp" 2>/dev/null || echo 0)
+(( size > 0 )) || exit 6
+(( size < cap )) || exit 7
+
+if [[ $kind == image ]]; then
+  magic=$(head -c 12 -- "$tmp" | od -An -tx1 | tr -d ' \n')
+  case $magic in
+    89504e470d0a1a0a*) ;;                      # PNG
+    ffd8ff*) ;;                                # JPEG
+    474946383*) ;;                             # GIF87a / GIF89a
+    424d*) ;;                                  # BMP
+    52494646????????57454250*) ;;              # RIFF....WEBP
+    *) exit 9 ;;
+  esac
+fi
+
+mv -f -- "$tmp" "$out" || exit 8
+trap - EXIT

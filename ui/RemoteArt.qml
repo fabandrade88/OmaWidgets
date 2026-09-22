@@ -3,56 +3,75 @@ import "../services"
 import "../model/Bytes.js" as Bytes
 import "../model/Media.js" as Media
 
-// Album art, fetched with a ceiling rather than handed to an Image as a URL.
+// Album art: local files read directly, remote ones fetched with a ceiling.
 //
-// The URL comes from whatever application registered itself on MPRIS, so it is
-// attacker-influenced in the ordinary sense: any process on the session bus can
-// publish one. An Image given a remote URL downloads whatever arrives, with no
-// limit on how long it takes or how much of it is kept, so remote art goes
-// through BoundedFetch instead and reaches the Image as bytes we have already
-// agreed to hold.
+// The URL comes from whatever application registered itself on MPRIS — any
+// process on the session bus can publish one — and an Image handed a remote URL
+// downloads whatever arrives, for as long as it takes. So a remote cover is
+// fetched by the helper, where curl stops the producer at the socket, and what
+// reaches this file is a local file that is already small.
 //
-// Local art — the `file://` URLs local players publish — is loaded directly.
-// It is a file on this machine, read by the same toolkit that reads every other
-// file, and fetching it over HTTP to bound it would be theatre.
+// The type is then decided twice, by the same rule: the helper refuses anything
+// whose magic bytes are not an image it knows, and the bytes are checked again
+// here before a decoder sees them.
 Item {
   id: root
 
   property string url: ""
   property int maxBytes: 1024 * 1024
-  // The decode bound, separate from the download bound: an image that arrives
-  // inside its byte budget can still be enormous in pixels.
+  // The decode bound, separate from the byte bound: an image inside its budget
+  // can still be enormous in pixels.
   property int decodeSize: 256
-  property int radius: 0
-  property bool rounded: false
 
   readonly property bool local: Media.isLocalArt(url)
   readonly property bool ready: image.status === Image.Ready
 
-  property string dataUrl: ""
+  property string fetchedPath: ""
 
   onUrlChanged: {
-    dataUrl = ""
-    fetch.cancel()
-    if (url !== "" && !local) fetch.get(url)
+    fetchedPath = ""
+    verify.path = ""
+    fetcher.cancel()
+    // Coalesced: a player that rewrites its metadata in a loop should cost one
+    // fetch, not one per write.
+    if (url !== "" && !local && Media.isRemoteArt(url)) debounce.restart()
+    else debounce.stop()
   }
 
-  BoundedFetch {
-    id: fetch
-    mode: "bytes"
+  Timer {
+    id: debounce
+    interval: 250
+    onTriggered: fetcher.get(root.url)
+  }
+
+  Fetcher {
+    id: fetcher
+    name: "art"
+    kind: "image"
     maxBytes: root.maxBytes
-    timeoutMs: 6000
-    // What the bytes are is decided by the bytes, not by the Content-Type the
-    // server claimed: anything that is not an image this toolkit decodes is
-    // dropped without ever reaching one.
-    onLoaded: function (text, bytes) { root.dataUrl = Bytes.imageDataUrl(bytes) }
-    onFailed: function (reason) { root.dataUrl = "" }
+    onFetched: function (path) {
+      verify.path = path
+      verify.reload()
+    }
+    onFailed: function (code) { root.fetchedPath = "" }
+  }
+
+  // Bounded on the way in as well: the helper wrote this file, but a read with
+  // no ceiling is the thing this plugin has twice been told not to do.
+  GuardedFile {
+    id: verify
+    binary: true
+    maxBytes: root.maxBytes
+    onBytesLoaded: function (bytes) {
+      root.fetchedPath = Bytes.imageType(bytes) === "" ? "" : "file://" + path
+    }
+    onMissing: root.fetchedPath = ""
   }
 
   Image {
     id: image
     anchors.fill: parent
-    source: root.local ? root.url : root.dataUrl
+    source: root.local ? root.url : root.fetchedPath
     fillMode: Image.PreserveAspectCrop
     asynchronous: true
     cache: true

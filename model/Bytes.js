@@ -1,11 +1,9 @@
-// Bytes to base64, and what an image's first bytes say it is.
+// What an image's first bytes say it is.
 //
-// Both exist because album art is fetched rather than handed to an Image as a
-// URL: a bounded fetch means we hold the bytes, and the only way back to an
-// Image from there is a data URL. Qt.btoa cannot encode binary — it takes a
-// string and encodes its UTF-8, which mangles every byte above 0x7F — so the
-// encoding is done here, where node can check it against a known-good one.
-var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+// Album art arrives as a file this plugin fetched, and the Content-Type that
+// came with it is the server's claim about it. This is the file's own: a
+// decoder is only ever handed something whose magic bytes match a format the
+// toolkit reads.
 
 // The formats a Qt image provider will actually decode, by their magic bytes.
 // Content-Type is the server's claim; this is the file's own.
@@ -43,33 +41,8 @@ function imageType(bytes) {
   return ""
 }
 
-function base64(bytes) {
-  if (!bytes || typeof bytes.length !== "number") return ""
-  var out = ""
-  var length = bytes.length
-  for (var i = 0; i < length; i += 3) {
-    var b0 = at(bytes, i)
-    var b1 = i + 1 < length ? at(bytes, i + 1) : -1
-    var b2 = i + 2 < length ? at(bytes, i + 2) : -1
-    out += ALPHABET[b0 >> 2]
-    out += ALPHABET[((b0 & 3) << 4) | (b1 < 0 ? 0 : b1 >> 4)]
-    out += b1 < 0 ? "=" : ALPHABET[((b1 & 15) << 2) | (b2 < 0 ? 0 : b2 >> 6)]
-    out += b2 < 0 ? "=" : ALPHABET[b2 & 63]
-  }
-  return out
-}
-
-// A data URL an Image can render, or "" if these bytes are not an image this
-// toolkit decodes.
-function imageDataUrl(bytes) {
-  var type = imageType(bytes)
-  if (type === "") return ""
-  var body = base64(bytes)
-  return body === "" ? "" : "data:" + type + ";base64," + body
-}
-
 if (typeof module !== "undefined") {
   module.exports = {
-    imageType: imageType, base64: base64, imageDataUrl: imageDataUrl
+    imageType: imageType
   }
 }

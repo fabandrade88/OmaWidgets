@@ -74,47 +74,60 @@ substitutions, shell separators, newlines, flags and case variants.
 `perf_event` access, no setuid helper. If a reading needs a privilege, the
 plugin does without the reading.
 
-**It talks to the network in two places, and you can turn both off.**
+**It talks to the network in two places, and you can turn both off.** The
+update check reads this repository's published `manifest.json`, at most once a
+day, and album art is fetched when the player publishes a remote URL.
+`updateCheck: false` stops the first; `albumArt: false` stops the second.
 
-The first is the update check: one `GET` of this repository's published
-`manifest.json`, at most once a day, to compare the published version with the
-installed one. It sends nothing — no identifier, no settings, no usage — and
-the URL is rebuilt from an allowlisted `https://github.com/<owner>/<repo>`
-shape rather than followed as written. `updateCheck: false` stops it entirely;
-the popup's **Check now** button still works, because asking outright is a
-different thing from asking on a timer.
+**Neither happens inside the shell process.** Nothing in QML can bound a
+response: Quickshell's `XMLHttpRequest` exposes no timeout, and its size can
+only be inspected once Qt has buffered it — with `responseType =
+"arraybuffer"` not until the body is complete, and even for text not until the
+first readable moment, which on a fast producer was measured carrying 1.5 MB
+against a 64 KB cap. A check that runs after the memory has been taken is not a
+limit.
 
-The second is album art, when the player publishes a remote URL.
+So every fetch runs in [`scripts/omawidgets-fetch`](../scripts/omawidgets-fetch),
+where curl can stop at the socket:
 
-**Both go through `services/BoundedFetch.qml`, which is where the limits are.**
-Quickshell's `XMLHttpRequest` has no `timeout` property and no way to cap a
-response, so a bounded fetch has to be assembled from what it does expose:
+| | |
+|---|---|
+| `--max-filesize` | refuses a response whose declared length is over the cap |
+| `head -c` | cuts an undeclared or chunked body at the cap, killing curl with `SIGPIPE`, so the producer stops at cap + 1 |
+| `--max-time` | bounds a server that sends slowly, or not at all |
+| size == cap | the file is discarded: a truncated answer is not a short one |
+| `--proto` and `--proto-redir` | http(s) only, on the first request and on every redirect |
 
-- **A deadline.** A timer aborts the request wherever it has got to — 8 seconds
-  for the manifest, 6 for art. A server that sends headers and then goes silent
-  cannot hold a request open.
-- **The declared length.** `Content-Length` is readable at `HEADERS_RECEIVED`,
-  before a byte of body arrives, and anything over the cap is refused there.
-- **What actually arrived.** Partial bodies are visible at `LOADING`, so a
-  chunked response with no declared length is aborted the moment it outgrows
-  the cap. The connection is torn down rather than the body collected.
+The caps are 64 KB for the manifest and 1 MB for a cover. The URL and the
+destination are arguments, never a shell string; both are validated in the
+script as well as by the caller; the destination must be inside
+`$XDG_RUNTIME_DIR/omawidgets/`; the temporary file is created with `mktemp`, so
+a predictable name cannot be pointed somewhere else by a symlink; and fetched
+files are pruned by age and by count, so a player rewriting its artwork in a
+loop cannot fill a tmpfs.
 
-The caps are 64 KB for the manifest and 1 MB for a cover. Measured against a
-server built to be hostile — a 256 MB chunked flood, a response declaring
-50 MB, and one that sends headers and then nothing — each is refused and the
-shell's RSS is unchanged afterwards in every case.
+What reaches QML is a local file that is already small, read through the same
+`GuardedFile` that bounds every other file this plugin reads. A cover then has
+to *be* an image by its own magic bytes — checked in the script and again in
+QML — so an HTML error page served as `image/png` never reaches a decoder. SVG
+is refused as a document with scripting rather than a picture. Decoding is
+bounded separately at 256 pixels a side. Local `file://` art is read directly.
 
-**Album art is fetched, not linked.** An `Image` handed a remote URL downloads
-whatever arrives, with no limit on size or time, and the URL comes from
-whatever application registered itself on MPRIS — any process on the session
-bus can publish one. So remote art goes through the same bounded fetch, and
-what comes back has to *be* an image: the type is decided by the file's own
-magic bytes, not by the `Content-Type` the server claimed, and anything else is
-dropped without reaching a decoder. SVG is refused too, being a document with
-scripting rather than a picture. Decoding is bounded separately, at 256 pixels
-a side, because an image inside its byte budget can still be enormous in
-pixels. Local `file://` art is read directly, by the same toolkit that reads
-every other file on this machine.
+**Where those URLs may point is not a privilege boundary.** A cover URL comes
+from a process on your own session bus, and the fetch runs as you — a process
+that can publish an MPRIS URL can already make the request itself. What matters
+is that the answer cannot cost the shell unbounded memory or time, and cannot
+become anything but a picture.
+
+**Measured, not asserted.** `tests/fetch.sh` stands up a server written to be
+hostile and runs 17 cases against the helper on every test run: a 256 MB
+chunked flood, a declared 50 MB body, headers followed by silence, an HTML page
+served as `image/png`, a redirect off http(s), a `file://` URL, a command
+substitution in a URL, a destination outside the runtime directory, a cap above
+the hard ceiling, and twelve fetches in a row to check the pruning. Through the
+real components in a running shell, each hostile case renders nothing and
+leaves the shell's RSS unchanged, and 200 artwork changes in two seconds
+coalesce into a single fetch.
 
 **It does not update itself.** The popup's **Update** button opens a terminal
 running Omarchy's own `omarchy plugin update <id>`, which shows a diff of what

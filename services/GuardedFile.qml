@@ -23,7 +23,12 @@ Item {
   readonly property bool oversized: _oversized
   readonly property bool ready: _ready
 
+  // Binary callers get the bytes that were measured rather than a string: the
+  // size check has already run on them, and text() would mangle them anyway.
+  property bool binary: false
+
   signal textLoaded(string body)
+  signal bytesLoaded(var bytes)
   signal missing()
 
   property bool _oversized: false
@@ -46,7 +51,8 @@ Item {
     }
     _oversized = false
     recheck.stop()
-    textLoaded(view.text())
+    if (binary) bytesLoaded(new Uint8Array(bytes))
+    else textLoaded(view.text())
   }
 
   FileView {

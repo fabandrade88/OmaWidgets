@@ -4,6 +4,42 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.9.3] — 2026-09-23
+
+### Security
+
+- **No network read happens inside the shell process any more.** The
+  marketplace review of 1.9.2 found the byte path still ineffective:
+  `responseType = "arraybuffer"` makes a body unreadable until it has been
+  buffered whole, so the size check could only run after the memory had been
+  taken. Checking the text path the same way showed the same flaw one step
+  further out — 1.5 MB already buffered by the first readable moment, against a
+  64 KB cap. Neither is something a check in QML can fix.
+
+  Both fetches now run in `scripts/omawidgets-fetch`, where curl stops at the
+  socket: `--max-filesize` refuses a declared length over the cap, `head -c`
+  cuts an undeclared or chunked body at cap + 1 with `SIGPIPE`, `--max-time`
+  bounds a slow server, a file that reaches the cap exactly is discarded, and
+  `--proto`/`--proto-redir` keep every hop on http(s). The URL and destination
+  are arguments rather than a shell string, the destination must be inside
+  `$XDG_RUNTIME_DIR/omawidgets/`, and the temporary file comes from `mktemp`.
+  `services/BoundedFetch.qml` is gone; nothing in the plugin opens a socket.
+
+- **Fetched files are bounded on the way back in, too** — read through
+  `GuardedFile`, which now hands binary callers the bytes it already measured
+  rather than a string.
+
+- **A player cannot spend the shell's memory or disk by rewriting its
+  metadata.** Artwork changes are coalesced and only one fetch runs at a time;
+  fetched files are pruned by age and by count. Measured: 200 URL changes in
+  two seconds produce one fetch and leave RSS unchanged.
+
+- **`tests/fetch.sh` runs 17 hostile cases against the helper on every test
+  run** — floods, declared oversize, stalls, a redirect off http(s), a
+  `file://` URL, a command substitution, a destination outside the runtime
+  directory, a cap above the ceiling, a lie about the content type, and the
+  pruning.
+
 ## [1.9.2] — 2026-09-22
 
 ### Security
