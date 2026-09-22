@@ -4,6 +4,34 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.9.1] — 2026-09-22
+
+### Fixed
+
+- **A saved card list came back as the defaults after a shell restart, and the
+  next write persisted them.** Reported as
+  [#1](https://github.com/fabandrade88/OmaWidgets/issues/1).
+
+  The bar host injects a widget's settings across the QML boundary, and an
+  array arrives on the other side as a sequence: it indexes, it has a length,
+  and `Array.isArray` says false. `Settings.normalize` gated on `Array.isArray`,
+  so it read a perfectly good `cards` list as "no list given" and substituted
+  the default six. The desktop then drew all six, and because every write starts
+  from those same settings, the next change to *any* setting wrote the defaults
+  over the user's list on disk. Lists are now recognised by shape rather than by
+  constructor, in `Settings`, `Layout` and `Arrange` alike.
+
+- **A write can no longer regress a field it did not touch.** It merged the
+  change into an already-normalised copy, which made every write a rewrite of
+  every field: anything the normaliser misread was persisted as a default. It
+  now merges onto a faithful copy of what the host injected and normalises once,
+  so a setting the change never mentioned survives the round trip.
+
+### Changed
+
+- Card names moved from `Settings` to `Layout`, next to the tile labels that
+  name the same cards.
+
 ## [1.9.0] — 2026-09-21
 
 ### Added

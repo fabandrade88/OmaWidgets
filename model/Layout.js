@@ -18,6 +18,16 @@ var CARD_TODO = "todo"
 var TILE_SPANS = {}
 TILE_SPANS[CARD_SYSTEM] = 2
 
+// What each card is called in prose — the popup's switches and anything else
+// that names one. The all-caps LABELS below are the compact tiles' own.
+var NAMES = {}
+NAMES[CARD_SYSTEM] = "Performance"
+NAMES[CARD_PODS] = "AirPods"
+NAMES[CARD_BATTERY] = "Battery"
+NAMES[CARD_POWER] = "Power profile"
+NAMES[CARD_MEDIA] = "Now playing"
+NAMES[CARD_TODO] = "To-do"
+
 var LABELS = {}
 LABELS[CARD_SYSTEM] = "PERFORMANCE"
 LABELS[CARD_MEDIA] = "NOW PLAYING"
@@ -46,8 +56,20 @@ function isPresent(id, settings, state) {
   return true
 }
 
+// Array.isArray is false for a list that came across the QML boundary as a
+// sequence, so the length is what decides — see Settings.asList.
+function listOf(value) {
+  if (Array.isArray(value)) return value
+  if (!value || typeof value !== "object") return []
+  var length = value.length
+  if (typeof length !== "number" || !isFinite(length) || length < 0) return []
+  var out = []
+  for (var i = 0; i < Math.min(Math.floor(length), 256); i++) out.push(value[i])
+  return out
+}
+
 function visibleCards(settings, state) {
-  var wanted = settings && Array.isArray(settings.cards) ? settings.cards : []
+  var wanted = settings ? listOf(settings.cards) : []
   var out = []
   for (var i = 0; i < wanted.length; i++) {
     if (isPresent(wanted[i], settings, state)) out.push(wanted[i])
@@ -59,6 +81,10 @@ function visibleCards(settings, state) {
 // Performance tile, which carries three readings and needs the room.
 function tileSpan(id) {
   return TILE_SPANS[String(id || "")] || 1
+}
+
+function cardName(id) {
+  return NAMES[String(id || "")] || ""
 }
 
 function tileLabel(id) {
@@ -103,8 +129,10 @@ if (typeof module !== "undefined") {
     TILE_SPANS: TILE_SPANS,
     POSITIONS: POSITIONS,
     defaultState: defaultState,
+    listOf: listOf,
     visibleCards: visibleCards,
     tileSpan: tileSpan,
+    cardName: cardName,
     tileLabel: tileLabel,
     columnsThatFit: columnsThatFit,
     anchorsFor: anchorsFor

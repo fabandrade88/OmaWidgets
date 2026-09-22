@@ -8,6 +8,7 @@ var PodsView = require("../model/PodsView.js")
 var Power = require("../model/Power.js")
 var Settings = require("../model/Settings.js")
 var Arrange = require("../model/Arrange.js")
+var Layout = require("../model/Layout.js")
 var Probe = require("../model/Probe.js")
 
 // --------------------------------------------- power profile: the only write
@@ -153,5 +154,35 @@ t.eq(Probe.path(Probe.parse("p\t/sys/../home/user/evil"), "p"), "",
 t.eq(Probe.path(Probe.parse("p\t"), "p"), "", "an empty path is refused")
 t.eq(Probe.flag(Probe.parse("gpu.temp.shared\t1"), "gpu.temp.shared"), true, "a flag reads as true")
 t.eq(Probe.flag(probed, "gpu.temp.shared"), false, "an absent flag reads as false")
+
+// The settings the bar host injects cross a QML boundary, where an array turns
+// into a sequence: it indexes, it has a length, and `Array.isArray` says false.
+// Reading that as "no list" replaced the user's card order with the defaults —
+// and since every write starts from these settings, the next change to any
+// setting at all wrote those defaults back over the list on disk.
+var sequence = { 0: "system", 1: "battery", 2: "power", length: 3 }
+t.deep(Settings.normalize({ cards: sequence }).cards, ["system", "battery", "power"],
+  "a card list that arrives as a sequence is still a card list")
+t.deep(Layout.visibleCards(Settings.normalize({ cards: sequence }), Layout.defaultState())
+  .slice(), ["system", "battery", "power"], "and the surfaces see the same three")
+t.deep(Arrange.reorder(sequence, { 0: "power", 1: "system", 2: "battery", length: 3 }),
+  ["power", "system", "battery"], "a drag can reorder one")
+t.deep(Settings.normalize({ cards: { length: -1 } }).cards, Settings.DEFAULTS.cards,
+  "a negative length is not a list")
+t.deep(Settings.normalize({ cards: { length: "3" } }).cards, Settings.DEFAULTS.cards,
+  "and neither is a length that is not a number")
+t.deep(Settings.normalize({ cards: "system" }).cards, Settings.DEFAULTS.cards,
+  "a string is not a list, however array-like it looks")
+
+// A write merges onto what the host injected and normalises once, so a field
+// the change did not mention cannot be regressed by the round trip.
+var injected = { id: "io.github.x.y", cards: sequence, position: "middle-left", columns: 3 }
+var merged = ({})
+for (var key in injected) merged[key] = injected[key]
+merged.position = "middle-left"
+var written = Settings.normalize(merged)
+t.deep(written.cards, ["system", "battery", "power"],
+  "writing the position it already had keeps the card list it never mentioned")
+t.eq(written.columns, 3, "and every other saved field with it")
 
 process.exit(t.report("input"))

@@ -1,4 +1,5 @@
 import QtQuick
+import "../model/Layout.js" as Layout
 import "../model/Settings.js" as Settings
 
 // Which widgets are on, as a folding list of switches.
@@ -27,7 +28,7 @@ ExpanderSection {
 
     ToggleRow {
       width: root.width
-      label: Settings.cardName(modelData)
+      label: Layout.cardName(modelData)
       checked: root.chosen.indexOf(modelData) !== -1
       onToggled: root.cardToggled(modelData)
     }

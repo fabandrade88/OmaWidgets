@@ -3,8 +3,17 @@
 // All of it is list arithmetic over the card list, so it lives here rather than
 // in the service: the rules about what a drag may and may not do to a
 // hand-edited `cards` array are worth testing directly.
+// Array.isArray is false for a list that came across the QML boundary as a
+// sequence — it indexes and has a length, but it is not an Array — so the
+// length is what decides. See Settings.asList for what that cost once.
 function list(value) {
-  return Array.isArray(value) ? value.slice() : []
+  if (Array.isArray(value)) return value.slice()
+  if (!value || typeof value !== "object") return []
+  var length = value.length
+  if (typeof length !== "number" || !isFinite(length) || length < 0) return []
+  var out = []
+  for (var i = 0; i < Math.min(Math.floor(length), 256); i++) out.push(value[i])
+  return out
 }
 
 // Tapping the selected widget again lets go of it, which is the only way to

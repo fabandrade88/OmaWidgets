@@ -33,25 +33,25 @@ Panel {
   readonly property bool desktopShown: config.desktop
   readonly property color iconColor: desktopShown ? barForeground : Qt.darker(barForeground, 1.55)
 
-  // updateEntryInline replaces the whole entry, so every write sends the full
-  // normalised object rather than a patch. Normalising on the way out also means
-  // a hand-edited file is repaired the first time a setting is touched.
+  // updateEntryInline replaces the whole entry, so a write sends the full
+  // object, and normalising on the way out repairs a hand-edited file.
   //
-  // The merged result is normalised too, not just the starting point. Merging a
-  // raw change into an already-normalised object and persisting that would write
-  // an invalid value to shell.json, which the next read then silently replaces
-  // with the default — losing the user's setting instead of ignoring bad input.
+  // The base is a faithful copy of what the host injected, not a normalised
+  // one: normalising first makes every write a rewrite of every field, so
+  // anything the normaliser misreads is persisted as a default — which is how
+  // changing the position could discard the card order. Copy, merge, normalise.
   function write(changes) {
     if (!bar || !bar.shell || typeof bar.shell.updateEntryInline !== "function") return
-    var merged = Settings.normalize(settings)
-    for (var key in changes) merged[key] = changes[key]
+    var merged = ({})
+    for (var key in settings) merged[key] = settings[key]
+    for (var change in changes) merged[change] = changes[change]
     var next = Settings.normalize(merged)
     settings = next
     bar.shell.updateEntryInline(moduleName, next)
   }
 
-  // One setting, by name. The panel below sends numbers, strings and flags the
-  // same way, and this is the only place that turns one into a write.
+  // One setting, by name: the panel sends numbers, strings and flags the same
+  // way, and this is the only place that turns one into a write.
   function writeOne(key, value) {
     var change = ({})
     change[key] = value

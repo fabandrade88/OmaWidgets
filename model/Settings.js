@@ -1,11 +1,10 @@
-// Settings normalisation and desktop placement maths.
+// Settings normalisation.
 //
-// Everything here treats the stored settings object as untrusted: it is JSON a
-// user (or another tool) edited by hand in ~/.config/omarchy/shell.json. A
-// string where a number belongs, a negative width, an unknown card id or a
-// position that does not exist must all produce a working widget rather than a
-// broken binding, so every field is coerced and clamped and unknown values fall
-// back to the default.
+// The stored object is untrusted: JSON a user or another tool edited by hand in
+// ~/.config/omarchy/shell.json. A string where a number belongs, a negative
+// width, an unknown card id or a position that does not exist must each produce
+// a working widget rather than a broken binding, so every field is coerced and
+// clamped and anything unrecognised falls back to its default.
 var CARD_SYSTEM = "system"
 var CARD_PODS = "pods"
 var CARD_BATTERY = "battery"
@@ -25,14 +24,6 @@ var POSITIONS = [
   "bottom-left", "bottom-center", "bottom-right"
 ]
 
-var CARD_NAMES = {}
-CARD_NAMES[CARD_SYSTEM] = "Performance"
-CARD_NAMES[CARD_PODS] = "AirPods"
-CARD_NAMES[CARD_BATTERY] = "Battery"
-CARD_NAMES[CARD_POWER] = "Power profile"
-CARD_NAMES[CARD_MEDIA] = "Now playing"
-CARD_NAMES[CARD_TODO] = "To-do"
-
 var DEFAULTS = {
   desktop: true,
   position: "top-right",
@@ -51,9 +42,8 @@ var DEFAULTS = {
   showCoreBars: true,
   // Compact mode's own geometry. A tile is square, so one number sizes it.
   tileSize: 132,
-  // Rounded on purpose, and independent of Style.cornerRadius: a theme with
-  // square corners still wants its small tiles rounded, which is the whole
-  // visual idea of compact mode.
+  // Independent of Style.cornerRadius on purpose: a theme with square corners
+  // still wants its small tiles rounded, which is compact mode's whole idea.
   tileRadius: 18,
   albumArt: true,
   preferredPlayer: "",
@@ -63,12 +53,11 @@ var DEFAULTS = {
   longBreakMinutes: 15,
   longBreakEvery: 4,
   todoRows: 5,
-  // A phase that ends waits for you by default. Chaining rounds without asking
-  // is the thing a Pomodoro timer is most often criticised for: the break you
-  // did not take still counts down.
+  // A phase that ends waits for you: chaining rounds without asking is how a
+  // break you did not take still counts down.
   autoAdvance: false,
-  // One GET of the published manifest, once a day, to say whether a newer
-  // version exists. Nothing is installed by it — see UpdateService.
+  // One GET of the published manifest a day, to say whether a newer version
+  // exists. Nothing is installed by it — see UpdateService.
   updateCheck: true,
   // Day-first and 24-hour, which is what most of the world writes.
   dateFormat: "dd-MM-yyyy",
@@ -82,9 +71,8 @@ function bool(value, fallback) {
   return fallback
 }
 
-// Number("") is 0, not NaN, so an absent field has to be caught before the
-// coercion — otherwise every missing number clamps to its minimum instead of
-// falling back to its default.
+// Number("") is 0, not NaN, so an absent field is caught before the coercion:
+// otherwise every missing number clamps to its minimum, not its default.
 function toNumber(value) {
   if (typeof value === "number") return isFinite(value) ? value : NaN
   if (value === undefined || value === null) return NaN
@@ -105,11 +93,29 @@ function real(value, fallback, min, max) {
   return Math.max(min, Math.min(max, n))
 }
 
-// Card order is the user's, but the set is ours: unknown ids are dropped and
-// duplicates collapse, so a hand-edited list can never make the same card
-// render twice or point at a component that does not exist.
-function cardList(value) {
-  if (!Array.isArray(value)) return DEFAULTS.cards.slice()
+// A list, whatever engine handed it over. An array injected across the QML
+// boundary arrives as a sequence: it indexes and has a length, but
+// `Array.isArray` says false. Reading that as "no list" replaced the saved card
+// order with the defaults, and the next write persisted them. Null means it is
+// genuinely not a list, which is not the same as an empty one.
+function asList(value) {
+  if (Array.isArray(value)) return value.slice()
+  if (!value || typeof value !== "object") return null
+  var length = value.length
+  if (typeof length !== "number" || !isFinite(length) || length < 0) return null
+  var out = []
+  // Bounded: a length this large is a broken value, not a card list.
+  var count = Math.min(Math.floor(length), 256)
+  for (var i = 0; i < count; i++) out.push(value[i])
+  return out
+}
+
+// Card order is the user's, the set is ours: unknown ids drop and duplicates
+// collapse, so a hand-edited list cannot render a card twice or name one that
+// does not exist.
+function cardList(raw) {
+  var value = asList(raw)
+  if (value === null) return DEFAULTS.cards.slice()
   var out = []
   for (var i = 0; i < value.length; i++) {
     var id = String(value[i] || "").trim()
@@ -151,8 +157,8 @@ function normalize(raw) {
     opacity: real(source.opacity, DEFAULTS.opacity, 0.2, 1),
     compact: compact,
     // The floor is 500ms deliberately. Every sample is a handful of small
-    // virtual-file reads, but a user who types 10 into the interval field should
-    // not be able to turn a widget into a busy loop inside the shell process.
+    // virtual-file reads, but 10ms in the interval field should not be able to
+    // turn a widget into a busy loop inside the shell process.
     intervalMs: int(source.intervalMs, DEFAULTS.intervalMs, 500, 60000),
     cards: cardList(source.cards),
     monitor: monitorName(source.monitor),
@@ -179,22 +185,14 @@ function normalize(raw) {
   }
 }
 
-function cardName(id) {
-  return CARD_NAMES[String(id || "")] || ""
-}
-
 if (typeof module !== "undefined") {
   module.exports = {
     CARD_SYSTEM: CARD_SYSTEM, CARD_PODS: CARD_PODS,
     CARD_BATTERY: CARD_BATTERY, CARD_POWER: CARD_POWER, CARD_MEDIA: CARD_MEDIA,
     CARD_TODO: CARD_TODO,
-    KNOWN_CARDS: KNOWN_CARDS,
-    POSITIONS: POSITIONS,
-    DATE_FORMATS: DATE_FORMATS,
-    TIME_FORMATS: TIME_FORMATS,
+    KNOWN_CARDS: KNOWN_CARDS, POSITIONS: POSITIONS,
+    DATE_FORMATS: DATE_FORMATS, TIME_FORMATS: TIME_FORMATS,
     DEFAULTS: DEFAULTS,
-    normalize: normalize,
-    cardList: cardList,
-    cardName: cardName
+    asList: asList, normalize: normalize, cardList: cardList
   }
 }
