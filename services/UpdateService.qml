@@ -41,31 +41,34 @@ Item {
     if (force !== true && !Update.dueForCheck(lastChecked, Date.now(), Update.INTERVAL_MS)) return
     checking = true
     error = ""
-    request()
+    fetch.get(url)
   }
 
-  function request() {
-    var xhr = new XMLHttpRequest()
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== XMLHttpRequest.DONE) return
+  // The request itself is bounded three ways — deadline, declared length, and
+  // what has actually arrived — by BoundedFetch. Everything here is what to do
+  // with the answer.
+  BoundedFetch {
+    id: fetch
+    maxBytes: Update.MAX_BODY
+    timeoutMs: 8000
+
+    onLoaded: function (text, bytes) {
       root.checking = false
       root.lastChecked = Date.now()
-      if (xhr.status !== 200) {
-        root.error = "Could not reach GitHub"
-        root.save()
-        return
-      }
-      var found = Update.versionFrom(xhr.responseText)
-      if (found === "") {
-        root.error = "The published manifest could not be read"
-        root.save()
-        return
-      }
-      root.latestVersion = found
+      var found = Update.versionFrom(text)
+      if (found === "") root.error = "The published manifest could not be read"
+      else root.latestVersion = found
       root.save()
     }
-    xhr.open("GET", url)
-    xhr.send()
+
+    onFailed: function (reason) {
+      root.checking = false
+      root.lastChecked = Date.now()
+      root.error = reason === "timed out" ? "GitHub did not answer in time"
+        : reason === "too large" ? "The published manifest is too large to be one"
+        : "Could not reach GitHub"
+      root.save()
+    }
   }
 
   // Remembered between sessions so a restart is not a reason to ask GitHub

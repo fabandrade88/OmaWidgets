@@ -155,6 +155,12 @@ function isRemoteArt(url) {
   return /^https?:\/\//i.test(String(url || ""))
 }
 
+// Local art is a file on this machine, so the toolkit reads it directly.
+// Anything else is fetched with a ceiling — see ui/RemoteArt.qml.
+function isLocalArt(url) {
+  return /^file:\/\//i.test(String(url || ""))
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     UNKNOWN: UNKNOWN,
@@ -167,6 +173,7 @@ if (typeof module !== "undefined") {
     progressFraction: progressFraction,
     describe: describe,
     artUrl: artUrl,
-    isRemoteArt: isRemoteArt
+    isRemoteArt: isRemoteArt,
+    isLocalArt: isLocalArt
   }
 }

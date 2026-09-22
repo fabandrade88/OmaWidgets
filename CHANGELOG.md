@@ -4,6 +4,41 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.9.2] — 2026-09-22
+
+### Security
+
+- **Every network read is bounded before it is held, not after.** Raised in the
+  marketplace security review of 1.9.1: the update check started an
+  `XMLHttpRequest` with no deadline, and the 64 KB ceiling was applied to
+  `responseText` once the whole body had already been buffered. A stalled
+  server could hold the request open indefinitely; a large one could be
+  buffered whole inside the shell process.
+
+  `services/BoundedFetch.qml` now performs both network reads with three
+  limits: a timer that aborts the request whatever state it is in, a
+  `Content-Length` check at `HEADERS_RECEIVED` that refuses an oversized
+  response before any body arrives, and a check of the partial body at
+  `LOADING` that aborts a chunked response the moment it outgrows the cap.
+  Measured against a hostile server — a 256 MB chunked flood, a declared 50 MB
+  body, and headers followed by silence — each is refused with the shell's RSS
+  unchanged.
+
+- **Album art is fetched with the same limits rather than handed to an
+  `Image`.** The URL comes from whatever application registered itself on
+  MPRIS, and an `Image` given a remote URL downloads whatever arrives, for as
+  long as it takes. Covers are now fetched through `BoundedFetch` with a 1 MB
+  ceiling, and what comes back must be an image by its own magic bytes — not by
+  the `Content-Type` the server claimed. SVG is refused as a document with
+  scripting. Decoding stays bounded at 256 pixels a side, and local `file://`
+  art is still read directly.
+
+### Fixed
+
+- Aborting a request from inside its own state-change callback wedged the QML
+  engine when the server was mid-body. The abort is queued instead, and the
+  handler returns first. Found by measuring, not by reading.
+
 ## [1.9.1] — 2026-09-22
 
 ### Fixed

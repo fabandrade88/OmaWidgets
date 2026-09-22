@@ -39,14 +39,9 @@ Card {
       color: Util.alpha(root.foreground, 0.08)
       clip: true
 
-      Image {
+      RemoteArt {
         anchors.fill: parent
-        source: root.showArt ? root.track.artUrl : ""
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        cache: true
-        sourceSize.width: 256
-        sourceSize.height: 256
+        url: root.showArt ? root.track.artUrl : ""
       }
     }
 

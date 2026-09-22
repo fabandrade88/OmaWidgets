@@ -80,11 +80,41 @@ The first is the update check: one `GET` of this repository's published
 `manifest.json`, at most once a day, to compare the published version with the
 installed one. It sends nothing — no identifier, no settings, no usage — and
 the URL is rebuilt from an allowlisted `https://github.com/<owner>/<repo>`
-shape rather than followed as written, so a hand-edited manifest cannot aim it
-elsewhere. The response is bounded before it is parsed and the version has to
-look like a version. `updateCheck: false` stops it entirely; the popup's
-**Check now** button still works, because asking outright is a different thing
-from asking on a timer.
+shape rather than followed as written. `updateCheck: false` stops it entirely;
+the popup's **Check now** button still works, because asking outright is a
+different thing from asking on a timer.
+
+The second is album art, when the player publishes a remote URL.
+
+**Both go through `services/BoundedFetch.qml`, which is where the limits are.**
+Quickshell's `XMLHttpRequest` has no `timeout` property and no way to cap a
+response, so a bounded fetch has to be assembled from what it does expose:
+
+- **A deadline.** A timer aborts the request wherever it has got to — 8 seconds
+  for the manifest, 6 for art. A server that sends headers and then goes silent
+  cannot hold a request open.
+- **The declared length.** `Content-Length` is readable at `HEADERS_RECEIVED`,
+  before a byte of body arrives, and anything over the cap is refused there.
+- **What actually arrived.** Partial bodies are visible at `LOADING`, so a
+  chunked response with no declared length is aborted the moment it outgrows
+  the cap. The connection is torn down rather than the body collected.
+
+The caps are 64 KB for the manifest and 1 MB for a cover. Measured against a
+server built to be hostile — a 256 MB chunked flood, a response declaring
+50 MB, and one that sends headers and then nothing — each is refused and the
+shell's RSS is unchanged afterwards in every case.
+
+**Album art is fetched, not linked.** An `Image` handed a remote URL downloads
+whatever arrives, with no limit on size or time, and the URL comes from
+whatever application registered itself on MPRIS — any process on the session
+bus can publish one. So remote art goes through the same bounded fetch, and
+what comes back has to *be* an image: the type is decided by the file's own
+magic bytes, not by the `Content-Type` the server claimed, and anything else is
+dropped without reaching a decoder. SVG is refused too, being a document with
+scripting rather than a picture. Decoding is bounded separately, at 256 pixels
+a side, because an image inside its byte budget can still be enormous in
+pixels. Local `file://` art is read directly, by the same toolkit that reads
+every other file on this machine.
 
 **It does not update itself.** The popup's **Update** button opens a terminal
 running Omarchy's own `omarchy plugin update <id>`, which shows a diff of what

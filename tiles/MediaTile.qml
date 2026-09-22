@@ -57,14 +57,9 @@ Tile {
         color: Util.alpha(Color.popups.text, 0.08)
       }
 
-      Image {
+      RemoteArt {
         anchors.fill: parent
-        source: root.showArt ? root.track.artUrl : ""
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        cache: true
-        sourceSize.width: 256
-        sourceSize.height: 256
+        url: root.showArt ? root.track.artUrl : ""
         layer.enabled: true
         layer.effect: MultiEffect {
           maskEnabled: true
