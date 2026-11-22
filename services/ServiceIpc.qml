@@ -33,6 +33,11 @@ Item {
     function selectPrevious(): string { return root.service.arranger.selectStep(-1) }
     function moveSelectedForward(): string { return root.service.arranger.moveSelected(1) ? "ok" : "nothing selected" }
     function moveSelectedBack(): string { return root.service.arranger.moveSelected(-1) ? "ok" : "nothing selected" }
+    // One cell at a time on the tile grid, pushing what it lands on down.
+    function moveSelectedLeft(): string { return root.service.arranger.nudgeSelected(-1, 0) }
+    function moveSelectedRight(): string { return root.service.arranger.nudgeSelected(1, 0) }
+    function moveSelectedUp(): string { return root.service.arranger.nudgeSelected(0, -1) }
+    function moveSelectedDown(): string { return root.service.arranger.nudgeSelected(0, 1) }
 
     // What the media card is showing, for a status line or a script.
     function nowPlaying(): string {

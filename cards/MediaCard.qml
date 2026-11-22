@@ -53,7 +53,8 @@ Card {
       Text {
         textFormat: Text.PlainText
         width: parent.width
-        visible: root.track.album !== ""
+        // Dropped on the short grid tile, which has room for one line of text.
+        visible: !root.compact && root.track.album !== ""
         text: root.track.album
         color: Qt.darker(root.foreground, 1.45)
         font.family: root.fontFamily
@@ -93,6 +94,7 @@ Card {
 
       MediaControls {
         track: root.track
+        compact: root.compact
         onPreviousRequested: if (root.media) root.media.previous()
         onToggleRequested: if (root.media) root.media.toggle()
         onNextRequested: if (root.media) root.media.next()

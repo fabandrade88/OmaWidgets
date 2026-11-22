@@ -51,6 +51,11 @@ Item {
     surface.width - 2 * baseSettings.marginX,
     baseSettings.cardWidth, baseSettings.spacing, cardCount)
 
+  // With the tile grid the overlay shows the same board, at the same cells. It
+  // respects the bar's space to do that, the way the desktop board does, so the
+  // two cover the same area — which means the bar is left undimmed.
+  readonly property bool grid: Layout.usesGrid(baseSettings)
+
   readonly property var overlayConfig: {
     var merged = ({})
     for (var key in baseSettings) merged[key] = baseSettings[key]
@@ -71,7 +76,7 @@ Item {
     // Exclusive focus is what makes Escape reach the key catcher below rather
     // than the window underneath.
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    exclusionMode: ExclusionMode.Ignore
+    exclusionMode: root.grid ? ExclusionMode.Normal : ExclusionMode.Ignore
 
     Rectangle {
       anchors.fill: parent
@@ -88,6 +93,11 @@ Item {
     MouseArea {
       anchors.fill: parent
       onClicked: function (mouse) {
+        if (boardLoader.item) {
+          var onBoard = mapToItem(boardLoader.item, mouse.x, mouse.y)
+          if (boardLoader.item.tileAt(onBoard.x, onBoard.y) === "") root.dismissed()
+          return
+        }
         var local = mapToItem(stack, mouse.x, mouse.y)
         var inside = local.x >= 0 && local.y >= 0
           && local.x <= stack.width && local.y <= stack.height
@@ -101,18 +111,48 @@ Item {
       blocked: root.composing
       onCloseRequested: root.dismissed()
 
-      CardStack {
+      // Loaded rather than hidden, so the cards exist once, in whichever
+      // arrangement is showing.
+      Loader {
+        id: boardLoader
+        anchors.fill: parent
+        anchors.leftMargin: root.baseSettings.marginX
+        anchors.rightMargin: root.baseSettings.marginX
+        anchors.topMargin: root.baseSettings.marginY
+        anchors.bottomMargin: root.baseSettings.marginY
+        active: root.grid
+        sourceComponent: TileBoard {
+          system: root.system
+          gpuService: root.gpuService
+          pods: root.pods
+          power: root.power
+          media: root.media
+          todos: root.todos
+          settings: root.baseSettings
+          presence: ({
+            hasPods: !!(root.pods && root.pods.hasBattery),
+            hasMedia: !!(root.media && root.media.hasMedia)
+          })
+          onProfileRequested: function (profile) { root.profileRequested(profile) }
+          onComposingChanged: function (active) { root.composing = active }
+        }
+      }
+
+      Loader {
         id: stack
         anchors.centerIn: parent
-        system: root.system
-        gpuService: root.gpuService
-        pods: root.pods
-        power: root.power
-        media: root.media
-        todos: root.todos
-        config: root.overlayConfig
-        onProfileRequested: function (profile) { root.profileRequested(profile) }
-        onComposingChanged: function (active) { root.composing = active }
+        active: !root.grid
+        sourceComponent: CardStack {
+          system: root.system
+          gpuService: root.gpuService
+          pods: root.pods
+          power: root.power
+          media: root.media
+          todos: root.todos
+          config: root.overlayConfig
+          onProfileRequested: function (profile) { root.profileRequested(profile) }
+          onComposingChanged: function (active) { root.composing = active }
+        }
       }
     }
   }

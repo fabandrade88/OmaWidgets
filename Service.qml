@@ -135,6 +135,7 @@ Item {
     id: arranger
     config: root.config
     presence: ({ hasPods: podsService.hasBattery, hasMedia: mediaService.hasMedia })
+    gridBounds: desktop.gridBounds
   }
 
   UpdateService {
@@ -177,6 +178,7 @@ Item {
     onSelectRequested: function (id) { arranger.select(id) }
     onOrderRequested: function (ids) { arranger.applyOrder(ids) }
     onHideRequested: function (id) { arranger.hide(id) }
+    onTilesRequested: function (tiles) { arranger.applyTiles(tiles) }
   }
 
   // The probe finishes after the services are built, so the first samples are

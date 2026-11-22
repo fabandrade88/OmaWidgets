@@ -25,8 +25,6 @@ Column {
   signal coreBarsToggled()
   signal overlayRequested()
   signal profileRequested(string profile)
-  signal columnsChanged(int columns)
-  signal tileSizeChanged(int size)
   signal settingChanged(string key, int value)
   signal textSettingChanged(string key, string value)
   signal flagToggled(string key)
@@ -76,6 +74,15 @@ Column {
   ToggleRow {
     width: parent.width
     visible: !root.config.compact
+    label: "Tile grid"
+    description: "Full cards on a grid of cells, dragged to any spot. Edges line up."
+    checked: root.config.grid
+    onToggled: root.flagToggled("grid")
+  }
+
+  ToggleRow {
+    width: parent.width
+    visible: !root.config.compact
     label: "Per-core bars"
     description: "One bar per CPU thread on the performance card."
     checked: root.config.showCoreBars
@@ -93,15 +100,14 @@ Column {
   ExpanderSection {
     width: parent.width
     title: "Layout"
-    summary: root.config.position + " \u00b7 " + root.config.columns
-      + (root.config.columns === 1 ? " column" : " columns")
+    summary: root.config.position + " \u00b7 " + (root.config.grid && !root.config.compact
+      ? "tile grid" : root.config.columns + (root.config.columns === 1 ? " column" : " columns"))
 
     LayoutSettings {
       width: parent.width
       config: root.config
       onPositionPicked: function (value) { root.positionPicked(value) }
-      onColumnsChanged: function (value) { root.columnsChanged(value) }
-      onTileSizeChanged: function (value) { root.tileSizeChanged(value) }
+      onSettingChanged: function (key, value) { root.settingChanged(key, value) }
     }
   }
 

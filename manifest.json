@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.fabandrade88.omawidgets",
   "name": "OmaWidgets",
-  "version": "1.9.5",
+  "version": "1.10.0",
   "author": "Fabricio Oliveira de Andrade",
   "license": "MIT",
   "repository": "https://github.com/fabandrade88/OmaWidgets",
@@ -33,6 +33,8 @@
       "columns": 1,
       "opacity": 0.92,
       "compact": false,
+      "grid": false,
+      "tiles": {},
       "intervalMs": 2000,
       "cards": [
         "system",
@@ -126,6 +128,13 @@
         "label": "Compact mode",
         "defaultValue": false,
         "description": "Replaces the full cards with small rounded tiles, one per reading. Not the same cards with less padding."
+      },
+      {
+        "key": "grid",
+        "type": "boolean",
+        "label": "Tile grid",
+        "defaultValue": false,
+        "description": "Places the full cards on a grid of cells you drag them to, so the edges line up. Compact mode takes precedence."
       },
       {
         "key": "showCoreBars",

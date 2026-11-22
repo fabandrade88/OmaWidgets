@@ -5,12 +5,8 @@
 // width, an unknown card id or a position that does not exist must each produce
 // a working widget rather than a broken binding, so every field is coerced and
 // clamped and anything unrecognised falls back to its default.
-var CARD_SYSTEM = "system"
-var CARD_PODS = "pods"
-var CARD_BATTERY = "battery"
-var CARD_POWER = "power"
-var CARD_MEDIA = "media"
-var CARD_TODO = "todo"
+var CARD_SYSTEM = "system", CARD_PODS = "pods", CARD_BATTERY = "battery"
+var CARD_POWER = "power", CARD_MEDIA = "media", CARD_TODO = "todo"
 
 // Also the canonical order: a card toggled off and back on returns to its
 // place here rather than to the end of the list.
@@ -18,27 +14,26 @@ var KNOWN_CARDS = [CARD_SYSTEM, CARD_MEDIA, CARD_TODO, CARD_PODS, CARD_BATTERY, 
 
 // Kept in step with Layout.POSITIONS by tests/input.test.js. Duplicated rather
 // than imported because a QML `.import` would stop `node` loading this file.
-var POSITIONS = [
-  "top-left", "top-center", "top-right",
-  "middle-left", "middle-right",
-  "bottom-left", "bottom-center", "bottom-right"
-]
+var POSITIONS = ["top-left", "top-center", "top-right", "middle-left", "middle-right",
+  "bottom-left", "bottom-center", "bottom-right"]
 
 var DEFAULTS = {
   desktop: true,
   position: "top-right",
-  marginX: 28,
-  marginY: 20,
+  marginX: 28, marginY: 20,
   cardWidth: 268,
   spacing: 10,
   columns: 1,
   opacity: 0.92,
   compact: false,
+  // The full cards on a board of cells instead of in columns. Off by default;
+  // `tiles` holds each card's cell, and a card without one takes a free spot.
+  grid: false,
+  tiles: {},
   intervalMs: 2000,
   cards: KNOWN_CARDS.slice(),
   monitor: "",
-  hidePodsWhenAbsent: true,
-  hideMediaWhenIdle: true,
+  hidePodsWhenAbsent: true, hideMediaWhenIdle: true,
   showCoreBars: true,
   // Compact mode's own geometry. A tile is square, so one number sizes it.
   tileSize: 132,
@@ -48,10 +43,7 @@ var DEFAULTS = {
   albumArt: true,
   preferredPlayer: "",
   // The Pomodoro cycle. 25/5/15 is a convention, not a law.
-  focusMinutes: 25,
-  shortBreakMinutes: 5,
-  longBreakMinutes: 15,
-  longBreakEvery: 4,
+  focusMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 15, longBreakEvery: 4,
   todoRows: 5,
   // A phase that ends waits for you: chaining rounds without asking is how a
   // break you did not take still counts down.
@@ -60,8 +52,7 @@ var DEFAULTS = {
   // exists. Nothing is installed by it — see UpdateService.
   updateCheck: true,
   // Day-first and 24-hour, which is what most of the world writes.
-  dateFormat: "dd-MM-yyyy",
-  timeFormat: "24h"
+  dateFormat: "dd-MM-yyyy", timeFormat: "24h"
 }
 
 function bool(value, fallback) {
@@ -93,11 +84,10 @@ function real(value, fallback, min, max) {
   return Math.max(min, Math.min(max, n))
 }
 
-// A list, whatever engine handed it over. An array injected across the QML
-// boundary arrives as a sequence: it indexes and has a length, but
-// `Array.isArray` says false. Reading that as "no list" replaced the saved card
-// order with the defaults, and the next write persisted them. Null means it is
-// genuinely not a list, which is not the same as an empty one.
+// A list, whatever engine handed it over: an array injected across the QML
+// boundary is a sequence that `Array.isArray` calls false, and reading that as
+// "no list" once replaced the saved card order with the defaults. Null means it
+// is genuinely not a list, which is not the same as an empty one.
 function asList(value) {
   if (Array.isArray(value)) return value.slice()
   if (!value || typeof value !== "object") return null
@@ -111,8 +101,7 @@ function asList(value) {
 }
 
 // Card order is the user's, the set is ours: unknown ids drop and duplicates
-// collapse, so a hand-edited list cannot render a card twice or name one that
-// does not exist.
+// collapse, so a hand-edited list cannot render a card twice or invent one.
 function cardList(raw) {
   var value = asList(raw)
   if (value === null) return DEFAULTS.cards.slice()
@@ -120,6 +109,18 @@ function cardList(raw) {
   for (var i = 0; i < value.length; i++) {
     var id = String(value[i] || "").trim()
     if (KNOWN_CARDS.indexOf(id) !== -1 && out.indexOf(id) === -1) out.push(id)
+  }
+  return out
+}
+
+// Each card's cell on the tile grid. Only known cards are read, so a key such as
+// __proto__ is never touched, and every cell is bounded and whole.
+function tileCells(raw) {
+  var out = {}
+  for (var i = 0; raw && typeof raw === "object" && i < KNOWN_CARDS.length; i++) {
+    var cell = raw[KNOWN_CARDS[i]] || {}
+    var col = int(cell.col, -1, 0, 255), row = int(cell.row, -1, 0, 255)
+    if (col >= 0 && row >= 0) out[KNOWN_CARDS[i]] = { col: col, row: row }
   }
   return out
 }
@@ -156,9 +157,10 @@ function normalize(raw) {
     columns: int(source.columns, compact ? 2 : DEFAULTS.columns, 1, 6),
     opacity: real(source.opacity, DEFAULTS.opacity, 0.2, 1),
     compact: compact,
-    // The floor is 500ms deliberately. Every sample is a handful of small
-    // virtual-file reads, but 10ms in the interval field should not be able to
-    // turn a widget into a busy loop inside the shell process.
+    grid: bool(source.grid, DEFAULTS.grid),
+    tiles: tileCells(source.tiles),
+    // The floor is 500ms deliberately: every sample is a few small virtual-file
+    // reads, but 10ms should not turn a widget into a busy loop in the shell.
     intervalMs: int(source.intervalMs, DEFAULTS.intervalMs, 500, 60000),
     cards: cardList(source.cards),
     monitor: monitorName(source.monitor),
@@ -178,8 +180,7 @@ function normalize(raw) {
     todoRows: int(source.todoRows, DEFAULTS.todoRows, 1, 20),
     autoAdvance: bool(source.autoAdvance, DEFAULTS.autoAdvance),
     updateCheck: bool(source.updateCheck, DEFAULTS.updateCheck),
-    // Validated against the list in DateTime.js, duplicated here for the same
-    // reason POSITIONS is: a QML `.import` would stop node loading this file.
+    // Duplicated from DateTime.js for the same reason POSITIONS is.
     dateFormat: choice(source.dateFormat, DATE_FORMATS, DEFAULTS.dateFormat),
     timeFormat: choice(source.timeFormat, TIME_FORMATS, DEFAULTS.timeFormat)
   }
@@ -192,7 +193,7 @@ if (typeof module !== "undefined") {
     CARD_TODO: CARD_TODO,
     KNOWN_CARDS: KNOWN_CARDS, POSITIONS: POSITIONS,
     DATE_FORMATS: DATE_FORMATS, TIME_FORMATS: TIME_FORMATS,
-    DEFAULTS: DEFAULTS,
-    asList: asList, normalize: normalize, cardList: cardList
+    DEFAULTS: DEFAULTS, asList: asList, normalize: normalize, cardList: cardList,
+    tileCells: tileCells
   }
 }

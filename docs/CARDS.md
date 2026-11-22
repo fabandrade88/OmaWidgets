@@ -8,7 +8,8 @@
 below every application window. They are there when you look at the desktop and
 out of the way when you are working. The window is sized to the cards and
 anchored to one corner, so the rest of your wallpaper keeps its own
-double-click-to-change-background behaviour.
+double-click-to-change-background behaviour. On the [tile grid](#tile-grid) the
+window covers the screen instead, and takes input only where a tile is.
 
 **As an overlay.** The same cards, side by side on a dimmed full-screen surface,
 summoned by a keybind and dismissed with `Escape` or a click outside them. One
@@ -49,6 +50,49 @@ The columns and tile size are in the bar popup, and compact defaults to two
 columns because a single column of small squares wastes the space a full card
 needs. The summoned overlay always shows the full cards: it has the whole
 screen, so there is nothing to compact.
+
+## Tile grid
+
+Off by default, and switched on with **Tile grid** in the bar popup. The full
+cards become tiles on a grid of cells that covers the screen, like the tiles of
+an old start menu. Every card has a fixed size, four cells wide (exactly one
+card) and this many tall:
+
+| Card | Cells (wide × tall) |
+|---|---|
+| Performance | 4 × 5 |
+| To-do | 4 × 6, and the list scrolls inside it |
+| Battery, AirPods | 4 × 3 |
+| Power profile, Now playing | 4 × 2 |
+
+A tile's height counts the gaps it spans, so battery over power, or AirPods over
+now playing, ends exactly where Performance does, and the edges line up.
+
+**Drag a tile to any free cell.** Empty cells stay empty, so gaps can be left on
+purpose. Dropping it on other tiles pushes them straight down; while you drag, a
+marker shows where it will land and the others show where they will go, and
+moving on lets them slide back. Let go off the board — over the bar, say — or
+where a push would send a tile off the bottom of the screen, and everything
+goes back. `moveSelectedLeft`, `Right`, `Up` and `Down` do the same from a
+keybind, one cell at a time.
+
+Positions are saved in cells, in the `tiles` setting, so another resolution only
+changes how many cells fit, and a tile that would fall off a smaller screen is
+pulled back inside. A card with no saved cell, or whose cell is taken, goes to
+the first free spot, starting from the corner in `position`. A hidden widget, or
+Now playing while nothing plays, keeps its cell and comes back to it.
+
+The board covers the screen but only takes clicks on the tiles, so a
+double-click on the empty wallpaper still opens the background picker. The cell
+height follows what the cards need at the theme's font size, so a larger font
+makes taller cells rather than clipped cards.
+
+On the two short tiles, Power profile and Now playing take their compact look:
+the profile's one-line description and the album line are left out. The
+summoned overlay shows the same board at the same cells; to do that it keeps
+clear of the bar the way the desktop does, so the bar is not dimmed. Compact
+mode takes precedence over the grid, and `columns` and `todoRows` apply only
+outside it.
 
 ## The cards
 

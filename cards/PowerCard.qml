@@ -50,7 +50,8 @@ Card {
   Text {
     textFormat: Text.PlainText
     width: parent.width
-    visible: root.activeDescription !== "" && root.lastError === ""
+    // Dropped on the short grid tile, where the segments say it already.
+    visible: !root.compact && root.activeDescription !== "" && root.lastError === ""
     text: root.activeDescription
     color: Qt.darker(root.foreground, 1.45)
     font.family: root.fontFamily

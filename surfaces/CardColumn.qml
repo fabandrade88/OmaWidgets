@@ -25,92 +25,18 @@ PackedLayout {
   spanFor: function (id) { return 1 }
 
   delegate: Component {
-    Loader {
-      readonly property string cardId: parent ? parent.cardId : ""
-      readonly property bool selected: parent ? parent.selected : false
-
+    CardLoader {
       width: parent ? parent.width : 0
-      sourceComponent: {
-        if (cardId === Layout.CARD_SYSTEM) return systemComponent
-        if (cardId === Layout.CARD_PODS) return podsComponent
-        if (cardId === Layout.CARD_BATTERY) return batteryComponent
-        if (cardId === Layout.CARD_POWER) return powerComponent
-        if (cardId === Layout.CARD_MEDIA) return mediaComponent
-        if (cardId === Layout.CARD_TODO) return todoComponent
-        return null
-      }
+      cardId: parent ? parent.cardId : ""
+      selected: parent ? parent.selected : false
+      settings: root.settings
+      arrangeable: root.arrangeable
+      selectionSource: root
+      system: root.system; gpuService: root.gpuService; pods: root.pods
+      power: root.power; media: root.media; todos: root.todos
+      onHideRequested: function (id) { root.hideRequested(id) }
+      onProfileRequested: function (profile) { root.profileRequested(profile) }
+      onComposingChanged: function (active) { root.composingChanged(active) }
     }
-  }
-
-  Component {
-    id: systemComponent
-    SystemCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      system: root.system; gpuService: root.gpuService; config: root.settings }
-  }
-
-  Component {
-    id: podsComponent
-    PodsCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      pods: root.pods; config: root.settings }
-  }
-
-  Component {
-    id: batteryComponent
-    BatteryCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      power: root.power; config: root.settings }
-  }
-
-  Component {
-    id: powerComponent
-    PowerCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      power: root.power; config: root.settings
-      onProfileRequested: function (profile) { root.profileRequested(profile) } }
-  }
-
-  Component {
-    id: todoComponent
-    TodoCard { id: todoCard
-      width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      todos: root.todos; config: root.settings
-
-      // A tap on any other widget is also a way of saying "never mind": the
-      // composer closes and the desktop gives the keyboard back, the same as
-      // clicking off the cards entirely. In `resources` because a card's default
-      // property is its visible content, and this is not content.
-      resources: Connections {
-        target: root
-        function onSelectRequested(id) {
-          if (id !== Layout.CARD_TODO) todoCard.composerOpen = false
-        }
-      }
-      // The overlay and the popup already have a keyboard, so the composer is
-      // simply there. The desktop asks first — see DesktopSurface.
-      editable: !root.arrangeable
-      requestable: root.arrangeable
-      onComposingChanged: function (active) { root.composingChanged(active) } }
-  }
-
-  Component {
-    id: mediaComponent
-    MediaCard { width: root.columnWidth; backgroundOpacity: root.settings.opacity
-      selected: parent.selected
-      closable: root.arrangeable
-      onCloseRequested: root.hideRequested(parent.cardId)
-      media: root.media; config: root.settings }
   }
 }

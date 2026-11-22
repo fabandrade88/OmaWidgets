@@ -48,10 +48,13 @@ surfaces/         where the cards are put, and how they are arranged
   OverlaySurface    the dimmed full-screen surface
   CardStack         picks full cards or compact tiles
   PackedLayout      places, selects and drags; CardColumn and TileGrid are its delegates
+  BoardWindow       the tile grid's window: the whole screen, input masked to the tiles
+  TileBoard         the tile grid: cells, placement, dragging; TileSlot is one tile
   Arranger          the selection, and what hiding or dragging asks for
 
 cards/            the full cards, and the parts only they use
   Card, SystemCard, MediaCard, PodsCard, BatteryCard, PowerCard, TodoCard
+  CardLoader        one card by id, wired once for the columns and the grid
   CoreBars, HistoryGraph, MetricRow, PomodoroDial, TodoRow, TodoComposer
 
 tiles/            compact mode
@@ -75,6 +78,7 @@ model/            pure JavaScript, no QML imports — `node` runs it
   Pomodoro          the focus and break cycle
   DateTime          reading and writing deadlines in the chosen format
   Layout, Pack      which widgets are worth drawing, and column packing
+  Grid, Cells       the tile grid in cells (placing, pushing) and in pixels
   Arrange           selecting, hiding and reordering
   Settings          normalisation and clamping
   Format, Series    numbers and units; bounded sample history
@@ -106,6 +110,9 @@ stops being: a file that outgrows the limit is doing more than one job.
 - **`arrange.test.js`** — selecting, hiding and reordering, and which player the
   media card should follow, including the QML-list case that is indexable but is
   not a JavaScript `Array`.
+- **`grid.test.js`** — the tile grid: placing saved and fresh tiles, pushing on a
+  drop, the keyboard nudge, the pixels, hostile `tiles` values, and 400 random
+  boards and drops that must never overlap or lose a tile.
 - **`todo.test.js`** — the to-do file in both directions, deadline urgency, and
   the Pomodoro cycle.
 - **`datetime.test.js`** — parsing and formatting deadlines in every supported

@@ -62,6 +62,8 @@ omarchy-shell omawidgets deselect
 omarchy-shell omawidgets hideSelected         # prints what it hid, or "nothing selected"
 omarchy-shell omawidgets moveSelectedForward  # reorder from the keyboard
 omarchy-shell omawidgets moveSelectedBack
+omarchy-shell omawidgets moveSelectedLeft     # tile grid: one cell, pushing what it lands on down
+omarchy-shell omawidgets moveSelectedRight    # also Up and Down; prints ok, blocked or why not
 
 omarchy-shell omawidgets addTodo "Ship the plugin"   # no deadline; set one in the card
 omarchy-shell omawidgets todos                       # "3 open  1 done  2 archived"
@@ -93,7 +95,7 @@ typo costs you one setting rather than the widget.
 | `shortBreakMinutes` | `5` | 1–60 |
 | `longBreakMinutes` | `15` | 1–120 |
 | `longBreakEvery` | `4` | 1–12 focus rounds before the long break |
-| `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count |
+| `todoRows` | `5` | 1–20 rows listed on the card; the rest are summarised as a count. On the tile grid the list scrolls instead |
 | `updateCheck` | `true` | Ask GitHub once a day whether a newer version was published. Off, only the popup's **Check now** button asks. Nothing is ever installed without you |
 | `autoAdvance` | `false` | Start the next phase by itself when one ends. Off, the alarm still sounds and the next phase waits to be started |
 | `dateFormat` | `dd-MM-yyyy` | Also `dd/MM/yyyy`, `yyyy-MM-dd`, `MM/dd/yyyy` |
@@ -105,6 +107,8 @@ typo costs you one setting rather than the widget.
 | `marginX` / `marginY` | `28` / `20` | Distance from the screen edges |
 | `opacity` | `0.92` | 0.2–1. The colour itself comes from the theme |
 | `compact` | `false` | Compact tiles instead of full cards |
+| `grid` | `false` | The full cards on the [tile grid](CARDS.md#tile-grid). Ignored in compact mode |
+| `tiles` | `{}` | Each card's cell on the grid, as `{"system": {"col": 0, "row": 0}}`. Written by dragging. Unknown cards and cells without both coordinates are dropped; each coordinate is coerced to a whole number from 0 to 255 |
 | `tileSize` | `132` | 88–260 pixels. Tiles are square, so one number sizes them |
 | `tileRadius` | `18` | 0–64 pixels. Independent of the theme's radius, so a square theme still gets rounded tiles |
 | `hideMediaWhenIdle` | `true` | Drop the media card when nothing is playing |

@@ -14,8 +14,6 @@ Card {
 
   property var todos: null
   property var config: ({})
-  // Adding needs a keyboard, and the desktop layer never takes one. True in the
-  // overlay and the bar popup, false on the desktop.
   // Where a keyboard is already available — the overlay and the bar popup — the
   // composer is simply shown. On the desktop it is behind a button, because
   // showing it there means taking the keyboard from the window you are using.
@@ -35,6 +33,8 @@ Card {
   readonly property bool keyboardWanted: composerOpen || (composerVisible && composer.focused)
 
   onKeyboardWantedChanged: root.composingChanged(keyboardWanted)
+  // A card torn down mid-sentence must still give the keyboard back.
+  Component.onDestruction: if (keyboardWanted) root.composingChanged(false)
 
   // The archive is a different list, not a place to add to: opening it puts the
   // composer away, and the keyboard with it.
@@ -48,7 +48,22 @@ Card {
     if (!todos) return []
     return showArchive ? todos.archivedItems : todos.sorted
   }
-  readonly property int visibleLimit: config.todoRows || 5
+
+  // Set by the tile grid: the card is exactly this tall and the list scrolls in
+  // what the clock and buttons leave. At -1 it lists `todoRows`, as the columns do.
+  property real fixedHeight: -1
+  property real listBudget: 0
+  readonly property bool scrolls: fixedHeight > 0
+  // Bounded even when scrolling: every row is remade on each one-minute tick.
+  readonly property int visibleLimit: scrolls ? 50 : (config.todoRows || 5)
+
+  // The room left for the list is one subtraction. Deferred rather than bound,
+  // because the card's height includes the list's own.
+  function fitList() {
+    if (scrolls) listBudget = Math.max(0, fixedHeight - (implicitHeight - listScroll.height))
+  }
+  onImplicitHeightChanged: Qt.callLater(fitList)
+  onFixedHeightChanged: Qt.callLater(fitList)
 
   title: "To-do"
   glyph: "󰗇"
@@ -71,47 +86,59 @@ Card {
 
   PanelSeparator { width: parent.width }
 
-  Column {
+  Flickable {
+    id: listScroll
     width: parent.width
-    spacing: Style.spacing.sm
+    height: root.scrolls ? Math.min(listColumn.implicitHeight, root.listBudget) : listColumn.implicitHeight
+    contentWidth: width
+    contentHeight: listColumn.implicitHeight
+    interactive: root.scrolls && contentHeight > height
+    clip: root.scrolls
+    boundsBehavior: Flickable.StopAtBounds
 
-    Repeater {
-      model: root.shown.slice(0, root.visibleLimit)
+    Column {
+      id: listColumn
+      width: parent.width
+      spacing: Style.spacing.sm
 
-      TodoRow {
-        width: parent.width
-        todo: modelData
-        config: root.config
-        now: root.todos ? root.todos.clock && Date.now() : 0
-        deletable: root.showArchive
-        onToggled: if (root.todos) root.todos.toggle(modelData.id)
-        onArchiveToggled: {
-          if (!root.todos) return
-          if (modelData.archived === true) root.todos.unarchive(modelData.id)
-          else root.todos.archive(modelData.id)
+      Repeater {
+        model: root.shown.slice(0, root.visibleLimit)
+
+        TodoRow {
+          width: parent.width
+          todo: modelData
+          config: root.config
+          now: root.todos ? root.todos.clock && Date.now() : 0
+          deletable: root.showArchive
+          onToggled: if (root.todos) root.todos.toggle(modelData.id)
+          onArchiveToggled: {
+            if (!root.todos) return
+            if (modelData.archived === true) root.todos.unarchive(modelData.id)
+            else root.todos.archive(modelData.id)
+          }
+          onDeleteRequested: if (root.todos) root.todos.remove(modelData.id)
         }
-        onDeleteRequested: if (root.todos) root.todos.remove(modelData.id)
       }
-    }
 
-    Text {
-      textFormat: Text.PlainText
-      width: parent.width
-      visible: root.shown.length === 0
-      text: root.showArchive ? "Nothing archived yet." : "Nothing to do. Enjoy it."
-      color: Qt.darker(root.foreground, 1.45)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
-    }
+      Text {
+        textFormat: Text.PlainText
+        width: parent.width
+        visible: root.shown.length === 0
+        text: root.showArchive ? "Nothing archived yet." : "Nothing to do. Enjoy it."
+        color: Qt.darker(root.foreground, 1.45)
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
 
-    Text {
-      textFormat: Text.PlainText
-      width: parent.width
-      visible: root.shown.length > root.visibleLimit
-      text: "+" + (root.shown.length - root.visibleLimit) + " more"
-      color: Qt.darker(root.foreground, 1.45)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
+      Text {
+        textFormat: Text.PlainText
+        width: parent.width
+        visible: root.shown.length > root.visibleLimit
+        text: "+" + (root.shown.length - root.visibleLimit) + " more"
+        color: Qt.darker(root.foreground, 1.45)
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
     }
   }
 

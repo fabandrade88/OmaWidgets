@@ -78,6 +78,8 @@ Column {
 
   StepperRow {
     width: parent.width
+    // The grid's to-do tile scrolls, so it shows them all.
+    visible: !root.config.grid || root.config.compact
     label: "To-dos shown"
     description: "How many rows the card lists before summarising the rest."
     value: root.config.todoRows

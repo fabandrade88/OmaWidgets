@@ -77,6 +77,12 @@ function visibleCards(settings, state) {
   return out
 }
 
+// The tile grid is for the full cards; compact mode keeps its own tiles, so
+// asking for both means compact.
+function usesGrid(settings) {
+  return !!settings && settings.grid === true && settings.compact !== true
+}
+
 // How many columns a tile occupies. Everything is one column wide except the
 // Performance tile, which carries three readings and needs the room.
 function tileSpan(id) {
@@ -131,6 +137,7 @@ if (typeof module !== "undefined") {
     defaultState: defaultState,
     listOf: listOf,
     visibleCards: visibleCards,
+    usesGrid: usesGrid,
     tileSpan: tileSpan,
     cardName: cardName,
     tileLabel: tileLabel,

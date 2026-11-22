@@ -1,5 +1,6 @@
 import QtQuick
 import "../model/Arrange.js" as Arrange
+import "../model/Grid.js" as Grid
 import "../model/Layout.js" as Layout
 
 // Selecting, hiding and reordering the desktop widgets.
@@ -14,8 +15,12 @@ QtObject {
   property var config: ({})
   property var presence: Layout.defaultState()
   property string selectedCard: ""
+  // The desktop's board in cells, reported by the surface: a keybind has no
+  // pointer to say which screen it means, so the first one's answers.
+  property var gridBounds: ({ cols: 0, rows: 0 })
 
   signal cardsChangeRequested(var cards)
+  signal tilesChangeRequested(var tiles)
 
   readonly property var cards: config && Array.isArray(config.cards) ? config.cards : []
   // What the desktop is actually showing, which is what a selection steps
@@ -70,5 +75,25 @@ QtObject {
     if (selectedCard === "") return false
     cardsChangeRequested(Arrange.moveBy(cards, selectedCard, delta))
     return true
+  }
+
+  // A drag on the tile grid finished.
+  function applyTiles(tiles) {
+    tilesChangeRequested(tiles)
+  }
+
+  // The selected tile one cell over, pushing whatever it lands on down, the
+  // same as dropping it there. Says why when it does not move.
+  function nudgeSelected(dc, dr) {
+    if (!Layout.usesGrid(config)) return "not in grid mode"
+    if (selectedCard === "") return "nothing selected"
+    var tiles = config.tiles || ({})
+    var cols = gridBounds.cols
+    var rows = gridBounds.rows
+    var layout = Grid.place(onScreen, tiles, cols, rows, config.position)
+    var result = Grid.nudge(layout, selectedCard, dc, dr, cols, rows)
+    if (!result || !result.fits) return "blocked"
+    tilesChangeRequested(Grid.toSaved(result.layout, tiles))
+    return "ok"
   }
 }

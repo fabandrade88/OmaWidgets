@@ -63,6 +63,7 @@ and nothing is polled that a signal can report.
 | **Power profile** | Saver, Balanced, Performance in one click, remembered per power source |
 | **Two surfaces** | Cards on the desktop below your windows, and the same cards on a summoned overlay |
 | **Compact mode** | The whole set as small rounded tiles, one reading each |
+| **Tile grid** | Optional: the full cards on a grid of cells, dragged to any spot, with every edge lined up |
 | **Arranging** | Click to select, drag to reorder, hover for an X to hide — or from a keybind |
 | **Themed** | Every colour, border, corner and type size from the active Omarchy theme |
 | **Idle-free** | Nothing on screen means no timers: measurably the same as not installing it |
@@ -96,7 +97,11 @@ and nothing is polled that a signal can report.
 an X that hides it. Hiding also switches it off in the popup, which is where you
 turn it back on.
 
-**Configure them.** The popup holds the desktop toggle, compact mode, per-core
+**Or put them on a grid.** Switch on **Tile grid** in the popup and the full
+cards become fixed-size tiles you can drag to any free cell of the screen; see
+[Tile grid](docs/CARDS.md#tile-grid).
+
+**Configure them.** The popup holds the desktop toggle, compact mode, the tile grid, per-core
 bars, the power profile, and three folding sections: **Cards**, **Layout**
 (position, columns, tile size) and **To-do and Pomodoro** (durations, rows, and
 the date and clock formats — `DD-MM-YYYY` and 24-hour by default). Changes are

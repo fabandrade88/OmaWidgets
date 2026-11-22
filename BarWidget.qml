@@ -114,6 +114,7 @@ Panel {
     target: root.service ? root.service.arranger : null
     ignoreUnknownSignals: true
     function onCardsChangeRequested(cards) { root.write({ cards: cards }) }
+    function onTilesChangeRequested(tiles) { root.write({ tiles: tiles }) }
   }
 
   implicitWidth: button.implicitWidth
@@ -186,8 +187,6 @@ Panel {
           onPositionPicked: function (position) { root.setPosition(position) }
           onOverlayRequested: root.openOverlay()
           onProfileRequested: function (profile) { root.setProfile(profile) }
-          onColumnsChanged: function (value) { root.write({ columns: value }) }
-          onTileSizeChanged: function (value) { root.write({ tileSize: value }) }
           onSettingChanged: function (key, value) { root.writeOne(key, value) }
           onTextSettingChanged: function (key, value) { root.writeOne(key, value) }
           onFlagToggled: function (key) { root.writeOne(key, !root.config[key]) }

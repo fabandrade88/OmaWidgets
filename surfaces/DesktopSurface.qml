@@ -15,6 +15,9 @@ import "../model/Settings.js" as Settings
 //   * The window is sized to the cards, not to the screen, and anchored to one
 //     corner. A full-screen surface would swallow the double-click Omarchy uses
 //     on empty wallpaper to open the background and theme pickers.
+//
+// The tile grid is the exception: tiles may sit anywhere, so its window covers
+// the screen and masks its input to the tiles instead — see BoardWindow.
 Item {
   id: root
 
@@ -32,6 +35,7 @@ Item {
   signal selectRequested(string id)
   signal orderRequested(var ids)
   signal hideRequested(string id)
+  signal tilesRequested(var tiles)
 
   // The desktop layer refuses the keyboard by default — that is what stops a
   // desktop widget stealing keys from the window you are working in. It asks for
@@ -41,6 +45,13 @@ Item {
   property bool composing: false
 
   readonly property var placement: Layout.anchorsFor(config.position)
+  readonly property bool grid: Layout.usesGrid(config)
+
+  // The first screen's board, in cells, so a keybind can move a tile without a
+  // pointer to say which screen it means.
+  readonly property var gridBounds: boards.instances.length > 0 && boards.instances[0]
+    ? { cols: boards.instances[0].board.cols, rows: boards.instances[0].board.rows }
+    : { cols: 0, rows: 0 }
 
   // An empty `monitor` setting means every screen. A name that matches nothing
   // yields no surface, which is the honest outcome of asking for a screen that
@@ -55,7 +66,7 @@ Item {
   }
 
   Variants {
-    model: root.targetScreens
+    model: root.grid ? [] : root.targetScreens
 
     PanelWindow {
       id: surface
@@ -122,6 +133,29 @@ Item {
         onHideRequested: function (id) { root.hideRequested(id) }
         onComposingChanged: function (active) { root.composing = active }
       }
+    }
+  }
+
+  Variants {
+    id: boards
+    model: root.grid ? root.targetScreens : []
+
+    BoardWindow {
+      system: root.system
+      gpuService: root.gpuService
+      pods: root.pods
+      power: root.power
+      media: root.media
+      todos: root.todos
+      config: root.config
+      showCards: root.showCards
+      selectedId: root.selectedId
+      composing: root.composing
+      onSelectRequested: function (id) { root.selectRequested(id) }
+      onTilesRequested: function (tiles) { root.tilesRequested(tiles) }
+      onHideRequested: function (id) { root.hideRequested(id) }
+      onProfileRequested: function (profile) { root.profileRequested(profile) }
+      onComposingRequested: function (active) { root.composing = active }
     }
   }
 }

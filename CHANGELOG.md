@@ -4,6 +4,51 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [1.10.0] — 2026-11-22
+
+### Added
+
+- **Tile grid** ([#3](https://github.com/fabandrade88/OmaWidgets/issues/3)), off
+  by default and switched on with **Tile grid** in the bar popup. The full cards
+  become fixed-size tiles on a grid of cells — Performance 4 × 5, To-do 4 × 6,
+  Battery and AirPods 4 × 3, Power profile and Now playing 4 × 2 — and a tile's
+  height counts the gaps it spans, so battery over power ends exactly where
+  Performance does and the edges line up. Idea and design by @szlukabence.
+  - Drag a tile to any free cell; empty cells stay empty. Tiles it is dropped
+    on are pushed straight down, with a marker showing where it will land, and
+    a drop off the board or one that would push a tile off the screen puts
+    everything back.
+  - Positions are saved in cells, in a new `tiles` setting, so another
+    resolution only changes how many cells fit. A hidden card, or Now playing
+    while nothing plays, comes back to its cell.
+  - The board covers the screen but takes input only on the tiles, so a
+    double-click on the empty wallpaper still opens the background picker.
+  - New IPC verbs `moveSelectedLeft`, `Right`, `Up` and `Down`, one cell at a
+    time.
+  - The overlay shows the same board at the same cells, and keeps clear of the
+    bar to do it.
+  - On the grid, the To-do list scrolls inside its tile, and Power profile and
+    Now playing take their compact look. `columns` and `todoRows` apply only
+    outside the grid, and compact mode takes precedence over it.
+
+### Changed
+
+- The six cards are built by one shared `CardLoader`, used by the columns and
+  the grid alike, so both draw the same cards with the same wiring.
+
+## [1.9.5] — 2026-10-10
+
+### Security
+
+- **A JPEG cover can no longer declare an enormous canvas either.** 1.9.4
+  bounded the dimensions a PNG, GIF or BMP declares, but JPEG — the format most
+  covers use — reached the decoder unchecked. A JPEG keeps its size in a frame
+  header after a variable run of segments, so the helper now walks to it; a
+  progressive one is the sharp case, since libjpeg allocates coefficient buffers
+  for the whole image before anything scales it down. Images are also bounded by
+  area, and a JPEG whose frame header is not within the first 128 KB is refused.
+  A 9000×9000 progressive cover of 475 KB was accepted before and is refused now.
+
 ## [1.9.4] — 2026-09-24
 
 ### Security
