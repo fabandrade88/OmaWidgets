@@ -1,0 +1,56 @@
+# The same suite as ./tests/run.sh on a developer's machine, on every push to
+# main and every pull request.
+#
+# Two stages need an Omarchy desktop and are skipped here, saying so in the log:
+# the QML lint (it resolves the shell's own `qs` modules) and the manifest
+# check against omarchy-plugin-validate, which falls back to checking the JSON.
+# Everything else runs as it does locally: the model under node, shellcheck,
+# the GPU and image rules, the fetch helper against its hostile server, the
+# hardware probe, the line limit, and every glyph against the font the bar uses.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Reading the checkout is all it does.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # The release Omarchy's Arch package ships, pinned by hash: the glyph
+      # check is only as good as the font it checks against.
+      NERD_FONT_URL: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/JetBrainsMono.tar.xz
+      NERD_FONT_SHA256: 04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install the tools the suite uses
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends shellcheck jq curl file python3 xz-utils
+
+      - name: Fetch the bar's font
+        run: |
+          dir="$RUNNER_TEMP/font"
+          mkdir -p "$dir"
+          curl -fsSL --max-time 120 -o "$dir/font.tar.xz" "$NERD_FONT_URL"
+          echo "$NERD_FONT_SHA256  $dir/font.tar.xz" | sha256sum -c -
+          tar -xJf "$dir/font.tar.xz" -C "$dir" JetBrainsMonoNerdFont-Regular.ttf
+          echo "OMAWIDGETS_FONT=$dir/JetBrainsMonoNerdFont-Regular.ttf" >> "$GITHUB_ENV"
+
+      - name: Run the suite
+        run: |
+          # The fetch helper writes only under the runtime directory, which a
+          # runner does not have; a private one stands in for it.
+          XDG_RUNTIME_DIR=$(mktemp -d)
+          export XDG_RUNTIME_DIR
+          node --version
+          ./tests/run.sh

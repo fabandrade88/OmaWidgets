@@ -86,7 +86,9 @@ runtime=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 dir=$(dirname -- "$out")
 # 0700 rather than whatever the umask says: the contents are this user's and
 # nobody else's business, even inside a runtime directory that is already 0700.
-mkdir -p -m 700 "$dir" || exit 4
+# Through the umask rather than `mkdir -m`, which would apply only to the last
+# directory and leave any parent it creates at the default.
+(umask 077 && mkdir -p -- "$dir") || exit 4
 # The prefix check above is lexical, so a symlinked path component would carry
 # the write outside the runtime directory. Resolve it and check again.
 real=$(realpath -m -- "$dir" 2>/dev/null) || exit 4
@@ -99,6 +101,9 @@ find "$dir" -maxdepth 1 -type f \( -name '*.img' -o -name '.fetch.*' \) \
 # rewrites its artwork URL in a loop would otherwise fill a tmpfs an hour at a
 # time. Keep the newest eight of whatever this call is fetching.
 prefix=$(basename -- "$out"); prefix=${prefix%%-*}
+# ls for its mtime order. Every name here is one this script wrote, so none can
+# carry a newline, and the prefix stays a literal rather than becoming a pattern.
+# shellcheck disable=SC2012
 ls -1t "$dir/$prefix-"*.img 2>/dev/null | tail -n +8 | while IFS= read -r stale; do
   rm -f -- "$stale"
 done

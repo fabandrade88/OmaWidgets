@@ -35,6 +35,16 @@ numbers are the ones in `manifest.json`.
 
 - The six cards are built by one shared `CardLoader`, used by the columns and
   the grid alike, so both draw the same cards with the same wiring.
+- The test suite runs on GitHub Actions for every push and pull request,
+  `shellcheck` included.
+
+### Security
+
+- **Every directory the fetch helper creates is now 0700, not only the last.**
+  `mkdir -p -m 700` applies the mode to the deepest directory alone, so a parent
+  it had to create took the umask's. Inside a runtime directory that is already
+  0700 this exposed nothing, but the intent was every level. Found by
+  `shellcheck`, which the new CI runs where it was being skipped locally.
 
 ## [1.9.5] — 2026-10-10
 

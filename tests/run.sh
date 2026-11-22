@@ -57,7 +57,8 @@ fi
 
 step "shell"
 if command -v shellcheck >/dev/null 2>&1; then
-  if shellcheck scripts/*; then echo "ok   shell — shellcheck is clean"; else status=1; fi
+  # -x follows the files the scripts source, from the scripts' own directory.
+  if shellcheck -x -P SCRIPTDIR scripts/*; then echo "ok   shell — shellcheck is clean"; else status=1; fi
 else
   echo "skip shell — shellcheck not installed"
 fi

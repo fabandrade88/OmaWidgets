@@ -129,3 +129,9 @@ stops being: a file that outgrows the limit is doing more than one job.
 `run.sh` also validates the manifest against the shell's own validator, lints
 the QML, runs `shellcheck` over the scripts when it is installed, runs the
 hardware probe on the machine you are sitting at, and enforces the line limit.
+
+The same suite runs on GitHub Actions for every push to `main` and every pull
+request (`.github/workflows/tests.yml`). The runner has no Omarchy desktop, so
+the QML lint is skipped there and the manifest is checked as JSON; everything
+else runs, including `shellcheck` and the glyph check against the Nerd Font
+release the bar ships, pinned by hash.
