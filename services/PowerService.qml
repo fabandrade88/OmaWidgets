@@ -8,7 +8,8 @@ import "../model/Power.js" as Power
 // Battery comes from UPower, which is signal-driven, so there is no polling on
 // this path at all. The profile is read over D-Bus with busctl (about 6ms)
 // rather than powerprofilesctl (about 250ms, it is Python), and only when
-// something could have changed it: startup, an AC transition, or our own write.
+// something could have changed it: startup, an AC transition, our own write, or
+// the daemon announcing a change made by someone else (the bar's battery menu).
 //
 // Writing is the one state change this plugin makes. It goes through Omarchy's
 // own omarchy-powerprofiles-set, so the choice is remembered per power source
@@ -110,6 +111,29 @@ Item {
         if (name !== "") root.activeProfile = name
       }
     }
+  }
+
+  // The daemon announces every change, whoever made it. gdbus rather than
+  // busctl monitor, which needs privileges on the system bus. It sits idle
+  // between changes, and is started again a little later if it ever exits.
+  Process {
+    id: watchProcess
+    running: true
+    command: ["gdbus", "monitor", "--system", "--dest", "net.hadess.PowerProfiles",
+      "--object-path", "/net/hadess/PowerProfiles"]
+    stdout: SplitParser {
+      onRead: function (line) {
+        var name = Power.parseProfileSignal(line)
+        if (name !== "") root.activeProfile = name
+      }
+    }
+    onExited: restartWatch.restart()
+  }
+
+  Timer {
+    id: restartWatch
+    interval: 5000
+    onTriggered: watchProcess.running = true
   }
 
   Process {

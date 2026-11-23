@@ -4,6 +4,16 @@ All notable changes to this plugin are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the version
 numbers are the ones in `manifest.json`.
 
+## [Unreleased]
+
+### Fixed
+
+- The Power profile card now follows a profile chosen somewhere else, such as
+  the battery menu in the Omarchy bar. It used to re-read the profile only at
+  startup, on an AC change and after its own write, so a change made elsewhere
+  left the card showing the old one. It now listens for the daemon's own change
+  announcement.
+
 ## [1.10.0] — 2026-11-22
 
 ### Added

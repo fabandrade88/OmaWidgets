@@ -76,6 +76,15 @@ function parseActiveProfile(raw) {
   return isKnownProfile(name) ? name : ""
 }
 
+// The profile named by one line of `gdbus monitor` output, or "" when the line
+// is about something else. This is how a change made elsewhere, such as the
+// bar's battery menu, reaches us.
+function parseProfileSignal(line) {
+  var match = String(line || "").match(/'ActiveProfile':\s*<'([^']*)'>/)
+  var name = match ? match[1] : ""
+  return isKnownProfile(name) ? name : ""
+}
+
 // Where the next profile is. Two behaviours on purpose: a tile has one gesture,
 // so tapping it cycles and wraps round to the start; arrow keys in the popup
 // step and stop at the ends, the way arrow keys on a slider do.
@@ -132,6 +141,7 @@ if (typeof module !== "undefined") {
     sanitizeProfile: sanitizeProfile,
     parseProfileList: parseProfileList,
     parseActiveProfile: parseActiveProfile,
+    parseProfileSignal: parseProfileSignal,
     nextProfileIndex: nextProfileIndex,
     profileLabel: profileLabel,
     profileDescription: profileDescription,
